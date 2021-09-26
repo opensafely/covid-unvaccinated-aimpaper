@@ -7,3 +7,5 @@ output/*
 metadata/*
 venv/
 .Rproj.user
+
+*.Rproj

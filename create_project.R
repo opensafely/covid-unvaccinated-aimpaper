@@ -1,10 +1,9 @@
-library('tidyverse')
+library(tidyverse)
 library(lubridate)
-library('yaml')
-# library('here')
-library('glue')
+library(yaml)
+library(glue)
 
-jcvi_groups <- c(2,9,11)
+jcvi_groups <- c("02","09","11")
 
 # create action functions ----
 
@@ -102,7 +101,7 @@ actions_list <- splice(
   
   action(
     name = "design",
-    run = "r:latest analysis/design.R",
+    run = "r:latest analysis/00_design.R",
     moderately_sensitive = list(
       dates = "analysis/lib/dates.json"
     )
@@ -119,20 +118,20 @@ actions_list <- splice(
     highly_sensitive = list(
       cohort = str_c("output/input.csv")
       )
-    ),
+    )#,
   
-  comment("# # # # # # # # # # # # # # # # # # #",
-          "Summary tables for each elig_group",
-          "# # # # # # # # # # # # # # # # # # #"),
-  
-  action(
-    name = "summary_tables",
-    run = "r:latest analysis/summary_tables_aim.R",
-    needs = list("study_definition"),
-    moderately_sensitive = list(
-      data = "output/data/summary_table_*.rds"
-    )
-  )
+  # comment("# # # # # # # # # # # # # # # # # # #",
+  #         "Summary tables for each elig_group",
+  #         "# # # # # # # # # # # # # # # # # # #"),
+  # 
+  # action(
+  #   name = "summary_tables",
+  #   run = "r:latest analysis/summary_tables_aim.R",
+  #   needs = list("study_definition"),
+  #   moderately_sensitive = list(
+  #     data = "output/data/summary_table_*.rds"
+  #   )
+  # )
 )
 
 project_list <- splice(

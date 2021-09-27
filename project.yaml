@@ -33,3 +33,43 @@ actions:
       highly_sensitive:
         cohort: output/input.csv
 
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Process the data 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  process_data:
+    run: r:latest analysis/01_data_process.R
+    needs:
+    - study_definition
+    outputs:
+      highly_sensitive:
+        data: output/data/data_processed_*.rds
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Summary tables for each elig_group 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  summary_tables_02:
+    run: r:latest analysis/02_summary_tables.R 02
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        data: output/data/summary_table_02.rds
+
+  summary_tables_09:
+    run: r:latest analysis/02_summary_tables.R 09
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        data: output/data/summary_table_09.rds
+
+  summary_tables_11:
+    run: r:latest analysis/02_summary_tables.R 11
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        data: output/data/summary_table_11.rds
+

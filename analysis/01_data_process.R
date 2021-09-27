@@ -12,6 +12,8 @@ library(tidyverse)
 library(lubridate)
 library(readr)
 
+sessionInfo()
+
 ## Output processed data to rds
 dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
 
@@ -25,7 +27,7 @@ fct_case_when <- function(...) {
   factor(dplyr::case_when(...), levels=levels)
 }
 
-## Print variable names
+cat("#### print variable names ####\n")
 read_csv(here::here("output", "input.csv"),
          n_max = 0,
          col_types = cols()) %>%
@@ -33,15 +35,16 @@ read_csv(here::here("output", "input.csv"),
   sort() %>%
   print()
 
+cat("#### extract data ####\n")
 data_extract0 <- read_csv(
     file = here::here("output", "input.csv"),
     col_types = cols_only(
-      
+
       ## Identifier
       patient_id = col_integer(),
-      
+
       elig_date = col_date(format="%Y-%m-%d"),
-      
+
       ## Clinical/demographic variables
       sex = col_character(),
       # ethnicity
@@ -60,7 +63,7 @@ data_extract0 <- read_csv(
       ## Varibles for deriving priority groups
       age_1 = col_integer(),
       age_2 = col_integer(),
-      
+
       ## Clinical variables
       # Asthma diagnosis codes
       astdx = col_integer(),
@@ -74,7 +77,7 @@ data_extract0 <- read_csv(
       ssri = col_integer(),
       # pregnant while eligible
       preg_elig_group = col_integer(),
-      
+
       # Variables for defining JCVI groups
       # asthma at risk group
       asthma_group = col_integer(),
@@ -110,11 +113,11 @@ data_extract0 <- read_csv(
       # atrisk_group = col_character(),
       # jcvi group
       jcvi_group = col_character(),
-      
+
       ## vaccination variables
       # First COVID vaccination date
       covid_vax_1_date = col_date(format="%Y-%m-%d"),
-      
+
       ## covid variables
       # positive COVID test before start_dat
       covid_positive_test_before_group = col_integer(),
@@ -124,7 +127,7 @@ data_extract0 <- read_csv(
       covid_hospital_admission_before_group = col_integer(),
       # covid-related hospitalisation between start_dat and index_date
       covid_hospital_admission_during_group = col_integer(),
-      
+
       ## died or deregistered variables
       # COVID related death
       death_with_covid_on_the_death_certificate_date = col_date(format="%Y-%m-%d"),
@@ -133,7 +136,7 @@ data_extract0 <- read_csv(
       # Deregistration date
       dereg_date = col_date(format="%Y-%m-%d"),
       # Death of any cause
-      death_date = col_date(format="%Y-%m-%d"),
+      death_date = col_date(format="%Y-%m-%d")
     ),
     na = character() # more stable to convert to missing later
     ) %>%
@@ -142,16 +145,16 @@ data_extract0 <- read_csv(
            age_2 = age_1,
            preg_elig_group = if_else(sex=="F", preg_elig_group, 0L))
 
-## Parse NAs
+cat("#### parse NAs ####\n")
 data_extract <- data_extract0 %>%
   mutate(across(
     .cols = where(is.character),
     .fns = ~na_if(.x, "")
   )) %>%
   mutate(patient_id = row_number()) %>% # create new ID variable, as duplicates after binding
-  arrange(patient_id) 
+  arrange(patient_id)
 
-#### variable groups
+cat("#### define variable groups ####\n")
 # variables used to define at risk group
 all_variables <- list(
   id_vars = c(
@@ -167,16 +170,16 @@ all_variables <- list(
     "sex",
     "ethnicity",
     "smoking_status",
-    "imd", 
-    "rural_urban", 
+    "imd",
+    "rural_urban",
     "stp",
     "region"
   ),
   # clinical variables
   clinical_vars = c(
-    "bmi", 
-    "hypertension", 
-    "ssri", 
+    "bmi",
+    "hypertension",
+    "ssri",
     "dmard",
     "astdx"),
   # jcvi grouping
@@ -230,9 +233,10 @@ elig_dates_tibble <- tribble(
   "11, aged 30-31", "2021-05-26",
 )
 
+cat("#### process data ####\n")
 data_processed <- data_extract %>%
   mutate(
-    
+
     # REMOVE ONCE ELIG_DATES FIXED (if keep change to age_1)
     elig_date = as_date(case_when(jcvi_group %in% "02"  ~  elig_dates_tibble$date[1],
                                   jcvi_group %in% "09"  ~ elig_dates_tibble$date[2],
@@ -243,16 +247,16 @@ data_processed <- data_extract %>%
                                   age_1 %in% c(30,31) ~ elig_dates_tibble$date[7],
                                   TRUE ~ NA_character_),
                         format = "%Y-%m-%d"),
-    
+
     age = if_else(jcvi_group %in% "11", age_2, age_1),
-    
+
     ageband = cut(
       age,
       breaks = c(seq(30,40,5), seq(50,55,5), seq(80,95,5), Inf),
       labels = c("30-34", "35-39", "40-49", "50-54", "55-79", "80-84", "85-89", "90-94", "95+"),
       right = FALSE
     ),
-    
+
     # Ethnicity
     ethnicity = if_else(is.na(ethnicity_6), ethnicity_6_sus, ethnicity_6),
     ethnicity = fct_case_when(
@@ -263,14 +267,14 @@ data_processed <- data_extract %>%
       ethnicity == "5" ~ "Other",
       TRUE ~ "Missing"
     ),
-    
+
     # vaccinated within 12 weeks of elig_date
     vax_12 = if_else(
       !is.na(covid_vax_1_date) &
         covid_vax_1_date <= elig_date + weeks(12),
       1L, 0L
     ),
-    
+
     # IMD **check this is best way to define IMD**
     imd = fct_case_when(
       between(imd, 1,6000) ~ "1 most deprived",
@@ -280,11 +284,11 @@ data_processed <- data_extract %>%
       between(imd, 24001, 30000) ~ "5 least deprived",
       TRUE ~ "Missing"
     ),
-    
+
     sex = fct_case_when(sex %in% "F" ~ "F",
                         sex %in% "M" ~ "M",
                         TRUE ~ NA_character_),
-    
+
     bmi = fct_case_when(
       bmi %in% "Not obese" ~ "Not obese",
       bmi %in% "Obese I (30-34.9)" ~ "Obese I (30-34.9)",
@@ -293,15 +297,15 @@ data_processed <- data_extract %>%
       bmi %in% "Missing" ~ "Missing",
       TRUE ~ NA_character_
     ),
-    
-    
+
+
     smoking_status = fct_case_when(
       smoking_status %in% "S" ~ "Current-smoker",
       smoking_status %in% "E" ~ "Ex-smoker",
       smoking_status %in% "N" ~ "Non-smoker",
       TRUE ~ "Missing"
     ),
-    
+
     # Region
     region = fct_case_when(
       region == "London" ~ "London",
@@ -314,42 +318,43 @@ data_processed <- data_extract %>%
       region == "West Midlands" ~ "West Midlands",
       region == "Yorkshire and The Humber" ~ "Yorkshire and the Humber",
       TRUE ~ "Missing"),
-    
+
     stp = factor(as.numeric(str_remove(stp, "STP")), levels = 1:10),
-    
+
     death_with_covid_on_the_death_certificate_group = if_else(
       !is.na(death_with_covid_on_the_death_certificate_date) &
-        (death_with_covid_on_the_death_certificate_date <= elig_date + weeks(12)), 
+        (death_with_covid_on_the_death_certificate_date <= elig_date + weeks(12)),
       1L, 0L),
-    
+
     death_with_28_days_of_covid_positive_test = if_else(
       (death_with_28_days_of_covid_positive_test == 1) &
         !is.na(death_date) &
-        (death_date <= elig_date + weeks(12)), 
+        (death_date <= elig_date + weeks(12)),
       1L, 0L),
-    
+
     death_date = if_else(
       !is.na(death_date) &
-        (death_date <= elig_date + weeks(12)), 
+        (death_date <= elig_date + weeks(12)),
       1L, 0L),
-    
+
     dereg_date = if_else(
       !is.na(dereg_date) &
-        (dereg_date <= elig_date + weeks(12)), 
+        (dereg_date <= elig_date + weeks(12)),
       1L, 0L)
-    
-    
+
+
   ) %>%
   mutate(across(-c(age, patient_id), as.factor)) %>%
   ## Exclusion criteria
   filter(!is.na(sex), !is.na(ageband))
 
+cat("#### define sample_and_weight function ####\n")
 # sample and weight from each level of outcome
 sample_and_weight <- function(.data, prob_0 = 1, prob_1 = 0.1) {
-  
+
   split_data <- .data %>%
-    group_split(vax_12) 
-  
+    group_split(vax_12)
+
   bind_rows(
     split_data[[1]] %>%
       sample_frac(size = prob_0) %>%
@@ -358,61 +363,68 @@ sample_and_weight <- function(.data, prob_0 = 1, prob_1 = 0.1) {
       sample_frac(size = prob_1) %>%
       mutate(weight = 1/prob_1)
   )
-  
+
 }
 
+cat("#### create data_processed_02 ####\n")
 data_processed_02 <- data_processed %>%
   filter(jcvi_group == "02") %>%
-  select(all_of(unname(unlist(all_variables[c("outcome", 
-                                              "age", 
-                                              "ageband", 
-                                              "dem_vars", 
-                                              "clinical_vars", 
-                                              "jcvi_vars", 
-                                              "longres_vars", 
-                                              "covid_vars", 
+  select(all_of(unname(unlist(all_variables[c("outcome",
+                                              "age",
+                                              "ageband",
+                                              "dem_vars",
+                                              "clinical_vars",
+                                              "jcvi_vars",
+                                              "longres_vars",
+                                              "covid_vars",
                                               "censor_vars")])))) %>%
   mutate(across(-c(age), as.factor)) %>%
   sample_and_weight() %>%
-  droplevels() 
+  droplevels()
 
+cat("#### create data_processed_09 ####\n")
 data_processed_09 <- data_processed %>%
   filter(jcvi_group == "09") %>%
-  # filter out patients who would have become eligible between the at risk 
+  # filter out patients who would have become eligible between the at risk
   # eligibility date and their age-related eligibility date
-  filter(if_all(all_of(unname(unlist(all_variables[c("jcvi_vars", 
-                                                     "longres_vars")]))),
-                ~ . == "0")) %>%
+  # filter(if_all(all_of(unname(unlist(all_variables[c("jcvi_vars",
+  #                                                    "longres_vars")]))),
+  #               ~ . == "0")) %>%
+  # if_all not found because not available in version dplyr_1.0.2
+  filter_at(all_of(unname(unlist(all_variables[c("jcvi_vars","longres_vars")]))),
+            all_vars(. == "0")) %>%
   filter(!(bmi %in% "Obese III (40+)")) %>%
-  select(all_of(unname(unlist(all_variables[c("outcome", 
-                                              "age", 
-                                              "ageband", 
-                                              "dem_vars", 
-                                              "clinical_vars", 
-                                              "covid_vars", 
+  select(all_of(unname(unlist(all_variables[c("outcome",
+                                              "age",
+                                              "ageband",
+                                              "dem_vars",
+                                              "clinical_vars",
+                                              "covid_vars",
                                               "censor_vars")])))) %>%
   sample_and_weight() %>%
   droplevels()
 
+cat("#### create data_processed_11 ####\n")
 data_processed_11 <- data_processed %>%
   filter(jcvi_group == "11") %>%
-  # filter out patients who would have become eligible between the at risk 
+  # filter out patients who would have become eligible between the at risk
   # eligibility date and their age-related eligibility date
-  filter(if_all(all_of(unname(unlist(all_variables[c("jcvi_vars", 
-                                                     "longres_vars")]))),
-                ~ . == "0")) %>%
+  # filter(if_all(all_of(unname(unlist(all_variables[c("jcvi_vars",
+  #                                                    "longres_vars")]))),
+  #               ~ . == "0")) %>%
+  filter_at(all_of(unname(unlist(all_variables[c("jcvi_vars","longres_vars")]))),
+            all_vars(. == "0")) %>%
   filter(!(bmi %in% "Obese III (40+)")) %>%
-  select(all_of(unname(unlist(all_variables[c("outcome", 
-                                              "age", 
-                                              "ageband", 
-                                              "dem_vars", 
-                                              "clinical_vars", 
+  select(all_of(unname(unlist(all_variables[c("outcome",
+                                              "age",
+                                              "ageband",
+                                              "dem_vars",
+                                              "clinical_vars",
                                               "preg_vars",
-                                              "covid_vars", 
+                                              "covid_vars",
                                               "censor_vars")])))) %>%
   sample_and_weight() %>%
   droplevels()
-
 
 # elig_dates_tibble <- data_processed %>%
 #   mutate(ageband = fct_case_when(between(age, 30, 31) ~ "30-31",
@@ -429,7 +441,7 @@ data_processed_11 <- data_processed %>%
 # split by vax_12 and select 10% of samples with vax_12 = "1!
 # create weight column
 
-# Save datasets as .rds files ----
+cat("#### save datasets as .rds files ####\n")
 write_rds(data_processed_02, here::here("output", "data", "data_processed_02.rds"), compress = "gz")
 write_rds(data_processed_09, here::here("output", "data", "data_processed_09.rds"), compress = "gz")
 write_rds(data_processed_11, here::here("output", "data", "data_processed_11.rds"), compress = "gz")

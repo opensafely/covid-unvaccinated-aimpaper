@@ -92,7 +92,7 @@ actions_list <- splice(
           "DO NOT EDIT project.yaml DIRECTLY",
           "This file is created by create_project.R",
           "Edit and run create_project.R to update the project.yaml",
-          "# # # # # # # # # # # # # # # # # # #"
+          "# # # # # # # # # # # # # # # # # # #\n"
   ),
   
   comment("# # # # # # # # # # # # # # # # # # #",
@@ -116,22 +116,39 @@ actions_list <- splice(
     run = "cohortextractor:latest generate_cohort --study-definition study_definition",
     needs = list("design"),
     highly_sensitive = list(
-      cohort = str_c("output/input.csv")
+      cohort = "output/input.csv"
       )
-    )#,
+    ),
   
-  # comment("# # # # # # # # # # # # # # # # # # #",
-  #         "Summary tables for each elig_group",
-  #         "# # # # # # # # # # # # # # # # # # #"),
-  # 
-  # action(
-  #   name = "summary_tables",
-  #   run = "r:latest analysis/summary_tables_aim.R",
-  #   needs = list("study_definition"),
-  #   moderately_sensitive = list(
-  #     data = "output/data/summary_table_*.rds"
-  #   )
-  # )
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Process the data",
+          "# # # # # # # # # # # # # # # # # # #"),
+  
+  action(
+    name = "process_data",
+    run = glue("r:latest analysis/01_data_process.R"),
+    needs = list("study_definition"),
+    highly_sensitive = list(
+      data = glue("output/data/data_processed_*.rds")
+    )
+    ),
+  
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Summary tables for each elig_group",
+          "# # # # # # # # # # # # # # # # # # #"),
+
+  unlist(lapply(jcvi_groups,
+                function(x)
+                  action(
+                    name = glue("summary_tables_{x}"),
+                    run = glue("r:latest analysis/02_summary_tables.R {x}"),
+                    needs = list("process_data"),
+                    moderately_sensitive = list(
+                      data = glue("output/data/summary_table_{x}.rds")
+                    )
+                  )
+  ),
+  recursive = FALSE)
 )
 
 project_list <- splice(

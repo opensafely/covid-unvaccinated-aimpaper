@@ -169,7 +169,7 @@ actions_list <- splice(
                                     moderately_sensitive = list(
                                       model = glue("output/models/model_{jcvi_group}_{model_type}_*.rds"),
                                       # for some reason the below fails when 'table' instead of 'tab'?!
-                                      table = glue("output/tables/xxx_{jcvi_group}_{model_type}.rds")
+                                      table = glue("output/tables/table_{jcvi_group}_{model_type}.rds")
                                     )
                                   )
                   ), recursive = FALSE)

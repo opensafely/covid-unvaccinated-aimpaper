@@ -84,7 +84,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_02_unadj_*.rds
-        table: output/tables/xxx_02_unadj.rds
+        table: output/tables/table_02_unadj.rds
 
   model_02_padj:
     run: r:latest analysis/03_model.R 02 padj
@@ -93,7 +93,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_02_padj_*.rds
-        table: output/tables/xxx_02_padj.rds
+        table: output/tables/table_02_padj.rds
 
   model_02_fadj:
     run: r:latest analysis/03_model.R 02 fadj
@@ -102,7 +102,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_02_fadj_*.rds
-        table: output/tables/xxx_02_fadj.rds
+        table: output/tables/table_02_fadj.rds
 
   model_09_unadj:
     run: r:latest analysis/03_model.R 09 unadj
@@ -111,7 +111,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_09_unadj_*.rds
-        table: output/tables/xxx_09_unadj.rds
+        table: output/tables/table_09_unadj.rds
 
   model_09_padj:
     run: r:latest analysis/03_model.R 09 padj
@@ -120,7 +120,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_09_padj_*.rds
-        table: output/tables/xxx_09_padj.rds
+        table: output/tables/table_09_padj.rds
 
   model_09_fadj:
     run: r:latest analysis/03_model.R 09 fadj
@@ -129,7 +129,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_09_fadj_*.rds
-        table: output/tables/xxx_09_fadj.rds
+        table: output/tables/table_09_fadj.rds
 
   model_11_unadj:
     run: r:latest analysis/03_model.R 11 unadj
@@ -138,7 +138,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_11_unadj_*.rds
-        table: output/tables/xxx_11_unadj.rds
+        table: output/tables/table_11_unadj.rds
 
   model_11_padj:
     run: r:latest analysis/03_model.R 11 padj
@@ -147,7 +147,7 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_11_padj_*.rds
-        table: output/tables/xxx_11_padj.rds
+        table: output/tables/table_11_padj.rds
 
   model_11_fadj:
     run: r:latest analysis/03_model.R 11 fadj
@@ -156,5 +156,5 @@ actions:
     outputs:
       moderately_sensitive:
         model: output/models/model_11_fadj_*.rds
-        table: output/tables/xxx_11_fadj.rds
+        table: output/tables/table_11_fadj.rds
 

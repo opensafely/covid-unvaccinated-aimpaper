@@ -5,6 +5,8 @@ library(glue)
 
 jcvi_groups <- c("02","09","11")
 
+model_types <- c("unadj", "padj", "fadj")
+
 # create action functions ----
 
 ## create comment function ----
@@ -92,7 +94,7 @@ actions_list <- splice(
           "DO NOT EDIT project.yaml DIRECTLY",
           "This file is created by create_project.R",
           "Edit and run create_project.R to update the project.yaml",
-          "# # # # # # # # # # # # # # # # # # #\n"
+          "# # # # # # # # # # # # # # # # # # #"
   ),
   
   comment("# # # # # # # # # # # # # # # # # # #",
@@ -134,21 +136,46 @@ actions_list <- splice(
     ),
   
   comment("# # # # # # # # # # # # # # # # # # #",
-          "Summary tables for each elig_group",
+          "Summary tables for each jcvi_group",
           "# # # # # # # # # # # # # # # # # # #"),
 
   unlist(lapply(jcvi_groups,
                 function(x)
                   action(
                     name = glue("summary_tables_{x}"),
-                    run = glue("r:latest analysis/02_summary_tables.R {x}"),
+                    arguments = x,
+                    run = "r:latest analysis/02_summary_tables.R",
                     needs = list("process_data"),
                     moderately_sensitive = list(
-                      data = glue("output/data/summary_table_{x}.rds")
+                      table = glue("output/tables/summary_table_{x}.rds")
                     )
                   )
   ),
+  recursive = FALSE),
+  
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Models for each jcvi_group and model_type",
+          "# # # # # # # # # # # # # # # # # # #"),
+  
+  unlist(lapply(jcvi_groups,
+                function(jcvi_group)
+                  unlist(lapply(model_types,
+                                function(model_type)
+                                  action(
+                                    name = glue("model_{jcvi_group}_{model_type}"),
+                                    arguments = c(jcvi_group, model_type),
+                                    run = "r:latest analysis/03_model.R",
+                                    needs = list("process_data"),
+                                    moderately_sensitive = list(
+                                      model = glue("output/models/model_{jcvi_group}_{model_type}_*.rds"),
+                                      # for some reason the below fails when 'table' instead of 'tab'?!
+                                      table = glue("output/tables/xxx_{jcvi_group}_{model_type}.rds")
+                                    )
+                                  )
+                  ), recursive = FALSE)
+  ),
   recursive = FALSE)
+  
 )
 
 project_list <- splice(

@@ -46,7 +46,7 @@ actions:
         data: output/data/data_processed_*.rds
 
   ## # # # # # # # # # # # # # # # # # # # 
-  ## Summary tables for each elig_group 
+  ## Summary tables for each jcvi_group 
   ## # # # # # # # # # # # # # # # # # # # 
 
   summary_tables_02:
@@ -55,7 +55,7 @@ actions:
     - process_data
     outputs:
       moderately_sensitive:
-        data: output/data/summary_table_02.rds
+        table: output/tables/summary_table_02.rds
 
   summary_tables_09:
     run: r:latest analysis/02_summary_tables.R 09
@@ -63,7 +63,7 @@ actions:
     - process_data
     outputs:
       moderately_sensitive:
-        data: output/data/summary_table_09.rds
+        table: output/tables/summary_table_09.rds
 
   summary_tables_11:
     run: r:latest analysis/02_summary_tables.R 11
@@ -71,5 +71,90 @@ actions:
     - process_data
     outputs:
       moderately_sensitive:
-        data: output/data/summary_table_11.rds
+        table: output/tables/summary_table_11.rds
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Models for each jcvi_group and model_type 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  model_02_unadj:
+    run: r:latest analysis/03_model.R 02 unadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_02_unadj_*.rds
+        table: output/tables/xxx_02_unadj.rds
+
+  model_02_padj:
+    run: r:latest analysis/03_model.R 02 padj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_02_padj_*.rds
+        table: output/tables/xxx_02_padj.rds
+
+  model_02_fadj:
+    run: r:latest analysis/03_model.R 02 fadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_02_fadj_*.rds
+        table: output/tables/xxx_02_fadj.rds
+
+  model_09_unadj:
+    run: r:latest analysis/03_model.R 09 unadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_09_unadj_*.rds
+        table: output/tables/xxx_09_unadj.rds
+
+  model_09_padj:
+    run: r:latest analysis/03_model.R 09 padj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_09_padj_*.rds
+        table: output/tables/xxx_09_padj.rds
+
+  model_09_fadj:
+    run: r:latest analysis/03_model.R 09 fadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_09_fadj_*.rds
+        table: output/tables/xxx_09_fadj.rds
+
+  model_11_unadj:
+    run: r:latest analysis/03_model.R 11 unadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_11_unadj_*.rds
+        table: output/tables/xxx_11_unadj.rds
+
+  model_11_padj:
+    run: r:latest analysis/03_model.R 11 padj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_11_padj_*.rds
+        table: output/tables/xxx_11_padj.rds
+
+  model_11_fadj:
+    run: r:latest analysis/03_model.R 11 fadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_11_fadj_*.rds
+        table: output/tables/xxx_11_fadj.rds
 

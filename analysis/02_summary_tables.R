@@ -18,6 +18,8 @@ if(length(args)==0){
   jcvi_group <- args[[1]]
 }
 
+dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
+
 cat("#### import custom functions ####\n")
 source(here::here("analysis", "lib", "sanitise_variables.R"))
 source(here::here("analysis", "lib", "mask.R"))
@@ -86,4 +88,4 @@ summary_table <- bind_rows(
   rename_with(str_to_sentence) 
 
 cat("#### save summary_table ####\n")
-write_rds(summary_table, here::here("output", "data", glue("summary_table_{jcvi_group}.rds")))
+write_rds(summary_table, here::here("output", "tables", glue("summary_table_{jcvi_group}.rds")))

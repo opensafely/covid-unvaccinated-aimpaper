@@ -16,8 +16,6 @@ sessionInfo()
 
 ## Output processed data to rds
 dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
-## for tables output, so that 03_model doesn't need 02_summary_tables
-dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
 
 # Custom functions
 fct_case_when <- function(...) {

@@ -18,6 +18,8 @@ if(length(args)==0){
   jcvi_group <- args[[1]]
 }
 
+dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
+
 cat("#### import custom functions ####\n")
 source(here::here("analysis", "lib", "sanitise_variables.R"))
 source(here::here("analysis", "lib", "mask.R"))

@@ -29,6 +29,7 @@ library(glue)
 
 ## Create output directory
 dir.create(here::here("output", "models"), showWarnings = FALSE, recursive=TRUE)
+dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
 
 ## load functions for preprocessing, modelling and postprocessing results
 source(here::here("analysis", "lib", "model_preprocess.R"))

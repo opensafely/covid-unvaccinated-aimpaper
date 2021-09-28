@@ -132,6 +132,9 @@ actions_list <- splice(
     needs = list("study_definition"),
     highly_sensitive = list(
       data = glue("output/data/data_processed_*.rds")
+    ),
+    moderately_sensitive = list(
+      dates = "output/data/elig_dates_tibble.rds"
     )
     ),
   
@@ -142,7 +145,7 @@ actions_list <- splice(
   unlist(lapply(jcvi_groups,
                 function(x)
                   action(
-                    name = glue("summary_tables_{x}"),
+                    name = glue("summary_table_{x}"),
                     arguments = x,
                     run = "r:latest analysis/02_summary_tables.R",
                     needs = list("process_data"),
@@ -175,6 +178,26 @@ actions_list <- splice(
                   ), recursive = FALSE)
   ),
   recursive = FALSE)
+  
+  # ,comment("# # # # # # # # # # # # # # # # # # #",
+  #         "Generate PDF report",
+  #         "# # # # # # # # # # # # # # # # # # #"),
+  # 
+  # action(
+  #   name = "rmd_report",
+  #   run = glue(
+  #     "r:latest -e {q}",
+  #     q = single_quote('rmarkdown::render("analysis/report.Rmd",  knit_root_dir = "/workspace",  output_dir = "/workspace/output/report", output_format = c("pdf_document")   )')
+  #   ),
+  #   needs = splice(
+  #     "design", "process_data", 
+  #     lapply(jcvi_groups, function(jcvi_group) glue("summary_table_{jcvi_group}")),
+  #     unlist(lapply(model_types, function(model_type) lapply(jcvi_groups, function(jcvi_group) glue("model_{jcvi_group}_{model_type}"))), recursive = FALSE)
+  #   ),
+  #   moderately_sensitive = lst(
+  #     pdf = "output/report/report.pdf"
+  #   )
+  # )
   
 )
 

@@ -35,7 +35,22 @@ levs2 <- sapply(names(data),
 cat("#### generate summary table ####\n")
 summary_table <- bind_rows(
   
+  data %>%
+    group_by(weight, vax_12) %>%
+    count() %>%
+    # mask values < 5 (probably unnecessary but just in case occurs due to error in code upstream)
+    mask(n) %>%
+    # use inverse probability weighting to correct for random sampling
+    mutate(across(n, ~weight*n)) %>%
+    ungroup() %>%
+    mutate(value = str_c(comma(n, accuracy = 1), " (", round(100*n/sum(n),1), ")")) %>%
+    select(-weight, -n) %>%
+    pivot_wider(names_from = vax_12, values_from = value) %>%
+    mutate(variable = "n (% of sample)"),
+  
   # summarise age (only continuous variable)
+  # don't need to use inverse probability weighting to correct for random sampling
+  # here as the weights are all the same in each group, so cancel out when calculating mean and sd
   data %>% 
     group_by(vax_12) %>%
     summarise(mean = mean(age), sd = sd(age)) %>%
@@ -50,15 +65,20 @@ summary_table <- bind_rows(
     names(data)[!(names(data) %in% c("vax_12", "age", "weight"))], 
     function(x)
       data %>% 
-      group_by(vax_12, .data[[x]]) %>%
+      group_by(weight, vax_12, .data[[x]]) %>%
       count() %>%
-      ungroup(.data[[x]]) %>%
+      ungroup(weight, .data[[x]]) %>%
       # mask values < 5
       mask(n) %>%
+      # use inverse probability weighting to correct for random sampling
+      mutate(across(n, ~weight*n)) %>%
+      select(-weight) %>%
       mutate(value = str_c(comma(n, accuracy = 1), " (", round(100*n/sum(n),1), ")")) %>%
       ungroup() %>%
       select(vax_12, .data[[x]], value) %>%
       pivot_wider(names_from = vax_12, values_from = value) %>%
+      # replace NA with 0
+      mutate(across(c(`0`, `1`), ~if_else(is.na(.), "0 (0)", .))) %>%
       mutate(variable = x,
              category = as.character(.data[[x]])) %>%
       select(variable, category, `0`, `1`)

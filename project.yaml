@@ -44,12 +44,14 @@ actions:
     outputs:
       highly_sensitive:
         data: output/data/data_processed_*.rds
+      moderately_sensitive:
+        dates: output/data/elig_dates_tibble.rds
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Summary tables for each jcvi_group 
   ## # # # # # # # # # # # # # # # # # # # 
 
-  summary_tables_02:
+  summary_table_02:
     run: r:latest analysis/02_summary_tables.R 02
     needs:
     - process_data
@@ -57,7 +59,7 @@ actions:
       moderately_sensitive:
         table: output/tables/summary_table_02.rds
 
-  summary_tables_09:
+  summary_table_09:
     run: r:latest analysis/02_summary_tables.R 09
     needs:
     - process_data
@@ -65,7 +67,7 @@ actions:
       moderately_sensitive:
         table: output/tables/summary_table_09.rds
 
-  summary_tables_11:
+  summary_table_11:
     run: r:latest analysis/02_summary_tables.R 11
     needs:
     - process_data

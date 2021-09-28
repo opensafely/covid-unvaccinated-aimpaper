@@ -139,11 +139,11 @@ data_extract0 <- read_csv(
       death_date = col_date(format="%Y-%m-%d")
     ),
     na = character() # more stable to convert to missing later
-    ) %>%
+    ) 
     ### REMOVE THESE LINES WHEN RUN ON TPP DATA
-    mutate(jcvi_group %in% c("02", "09", "11"),
-           age_2 = age_1,
-           preg_elig_group = if_else(sex=="F", preg_elig_group, 0L))
+     # %>% mutate(jcvi_group %in% c("02", "09", "11"),
+     #       age_2 = age_1,
+     #       preg_elig_group = if_else(sex=="F", preg_elig_group, 0L))
 
 cat("#### parse NAs ####\n")
 data_extract <- data_extract0 %>%
@@ -221,32 +221,32 @@ all_variables <- list(
 
 readr::write_rds(all_variables, here::here("analysis", "lib", "all_variables.rds"))
 
-# REMOVE ONCE ELIG_DATES FIXED
-elig_dates_tibble <- tribble(
-  ~group, ~date,
-  "02",  "2020-12-08",
-  "09", "2021-03-19",
-  "11, aged 38-39", "2021-05-13",
-  "11, aged 36-37", "2021-05-19",
-  "11, aged 34-35", "2021-05-21",
-  "11, aged 32-33", "2021-05-25",
-  "11, aged 30-31", "2021-05-26",
-)
+# # REMOVE ONCE ELIG_DATES FIXED
+# elig_dates_tibble <- tribble(
+#   ~group, ~date,
+#   "02",  "2020-12-08",
+#   "09", "2021-03-19",
+#   "11, aged 38-39", "2021-05-13",
+#   "11, aged 36-37", "2021-05-19",
+#   "11, aged 34-35", "2021-05-21",
+#   "11, aged 32-33", "2021-05-25",
+#   "11, aged 30-31", "2021-05-26",
+# )
 
 cat("#### process data ####\n")
 data_processed <- data_extract %>%
   mutate(
 
-    # REMOVE ONCE ELIG_DATES FIXED (if keep change to age_1)
-    elig_date = as_date(case_when(jcvi_group %in% "02"  ~  elig_dates_tibble$date[1],
-                                  jcvi_group %in% "09"  ~ elig_dates_tibble$date[2],
-                                  age_1 %in% c(38,39) ~ elig_dates_tibble$date[3],
-                                  age_1 %in% c(36,37) ~ elig_dates_tibble$date[4],
-                                  age_1 %in% c(34,35) ~ elig_dates_tibble$date[5],
-                                  age_1 %in% c(32,33) ~ elig_dates_tibble$date[6],
-                                  age_1 %in% c(30,31) ~ elig_dates_tibble$date[7],
-                                  TRUE ~ NA_character_),
-                        format = "%Y-%m-%d"),
+    # # REMOVE ONCE ELIG_DATES FIXED (if keep change to age_1)
+    # elig_date = as_date(case_when(jcvi_group %in% "02"  ~  elig_dates_tibble$date[1],
+    #                               jcvi_group %in% "09"  ~ elig_dates_tibble$date[2],
+    #                               age_1 %in% c(38,39) ~ elig_dates_tibble$date[3],
+    #                               age_1 %in% c(36,37) ~ elig_dates_tibble$date[4],
+    #                               age_1 %in% c(34,35) ~ elig_dates_tibble$date[5],
+    #                               age_1 %in% c(32,33) ~ elig_dates_tibble$date[6],
+    #                               age_1 %in% c(30,31) ~ elig_dates_tibble$date[7],
+    #                               TRUE ~ NA_character_),
+    #                     format = "%Y-%m-%d"),
 
     age = if_else(jcvi_group %in% "11", age_2, age_1),
 
@@ -426,17 +426,20 @@ data_processed_11 <- data_processed %>%
   sample_and_weight() %>%
   droplevels()
 
-# elig_dates_tibble <- data_processed %>%
-#   mutate(ageband = fct_case_when(between(age, 30, 31) ~ "30-31",
-#                                  between(age, 32, 33) ~ "32-33",
-#                                  between(age, 34, 35) ~ "34-35",
-#                                  between(age, 36, 37) ~ "36-37",
-#                                  between(age, 38, 39) ~ "38-39",
-#                                  between(age, 50, 54) ~ "50-55",
-#                                  between(age, 80, 120) ~ "80+",
-#                                  TRUE ~ NA_character_)) %>%
-#   distinct(jcvi_group, age_band, elig_date)
-# readr::write_rds(elig_dates_tibble, here::here("analysis", "lib", "elig_dates_tibble.rds"))
+cat("#### create elig_dates_tibble ####\n")
+elig_dates_tibble <- data_processed %>%
+  mutate(ageband = fct_case_when(between(age, 30, 31) ~ "30-31",
+                                 between(age, 32, 33) ~ "32-33",
+                                 between(age, 34, 35) ~ "34-35",
+                                 between(age, 36, 37) ~ "36-37",
+                                 between(age, 38, 39) ~ "38-39",
+                                 between(age, 50, 54) ~ "50-55",
+                                 between(age, 80, 120) ~ "80+",
+                                 TRUE ~ NA_character_)) %>%
+  distinct(jcvi_group, ageband, elig_date) %>%
+  select(jcvi_group, ageband, elig_date) %>%
+  arrange(jcvi_group, ageband, elig_date)
+readr::write_rds(elig_dates_tibble, here::here("output", "data", "elig_dates_tibble.rds"))
 
 # split by vax_12 and select 10% of samples with vax_12 = "1!
 # create weight column

@@ -1,0 +1,173 @@
+---
+title: "AIM paper analysis"
+author: "Elsie Horne"
+date: "22/09/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include=FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+dir.create(here::here("output", "report"), showWarnings = FALSE, recursive=TRUE)
+```
+
+```{r libraries}
+library(tidyverse)
+library(glue)
+library(readr)
+library(flextable)
+```
+
+```{r source_functions}
+source(here::here("analysis", "lib", "sanitise_variables.R"))
+```
+
+```{r flextable_functions}
+my_flextable_1 <- function(.data) {
+  .data %>%
+    flextable() %>%
+    fontsize(size=10) %>%
+    autofit() %>%
+    theme_vanilla()
+}
+
+my_flextable_2 <- function(.data) {
+  .data %>%
+    flextable() %>%
+    add_header_row(values = c("", "OR (95% CI)"), colwidths = c(1,3)) %>%
+    fontsize(size=10) %>%
+    autofit() %>%
+    theme_vanilla()
+}
+```
+
+
+## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination 
+
+### Methods
+
+Inclusion criteria:
+
+- Individuals alive and registered at a single TPP practice for at least 1 year prior to vaccine eligibility date
+- Individuals satisfying the criteria for one of the following:
+    - JCVI priority group 2 (80-120 years and not in group 1, eligible from 8th December 2020)
+    - JCVI priority group 9 (50-54 years and not in groups 1-8, eligible from 19th March 2021)
+    - JCVI priority group 11 (30-39 years and not in groups 1-10, eligible from 13th - 26th May 2021)
+
+For individuals in JCVI priority group 11, eligibility date was dependent on age:
+```{r elig_dates, include=TRUE}
+read_rds(here::here("output", "data", "elig_dates_tibble.rds")) %>%
+  my_flextable_1()
+```
+
+#### Outcome
+
+- 0 if no record of COVID vaccination up until 12 weeks after eligibility date
+- 1 if record of any brand of COVID vaccination any time up until 12 weeks after eligibility date
+
+#### Covariates
+
+The following clinical variables were defined based on definitions given in _COVID-19: the green book, chapter 14a_^[https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018444/Greenbook_chapter_14a_16Sept21.pdf]: severe asthma, chronic respiratory disease, chronic heart disease, chronic kidney disease, chronic liver disease, chronic neurological disease, diabetes (other endocrine disorders), immunosupressed, asplenia/dysfunction of spleen, severe mental illness.
+
+All clinical and demographic covariates were defined based on information up until the individual's eligibility date.
+
+Covariates related to COVID infection were split according to whether they occurred before the eligibility date or in the 12-week period after the eligibility date:
+
+- COVID +ve test before eligible
+- COVID +ve test while eligible
+- COVID hospitalisation before eligible
+- COVID hospitalisation while eligible
+
+Covariates relating to death or deregistration were defined during the 12-week period after the eligibility date:
+
+- Death while eligible (COVID on certificate)
+- Death while eligible (COVID +ve within 28 days)
+- Death while eligible (any cause)
+- Deregistered while eligible
+
+#### Analysis plan
+
+- From the individuals that satisfy the inclusion criteria, and for each eligibility group:
+    - identify all unvaccinated individuals (no vaccination within 12 weeks of their eligibility date) 
+    - randomly select 10% of the individuals who received a first vaccination within 12 weeks of their eligibility date
+- Generate summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients)
+- Fit logistic regression models for remaining unvaccinated (using inverse probability weights to correct for the random sampling of vaccinated patients) 
+
+### Results
+
+Table 1. Characteristics of individuals in JCVI priority group 2 aged 80+ years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients.
+```{r table1, include=TRUE}
+read_rds(here::here("output", "tables", str_c("summary_table_02.rds"))) %>%
+  my_flextable_1()
+```
+<!-- \pagebreak -->
+Table 2. Characteristics of individuals in JCVI priority group 9 aged 50-54 years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients.
+```{r table2, include=FALSE}
+read_rds(here::here("output", "tables", str_c("summary_table_09.rds"))) %>%
+  my_flextable_1()
+```
+<!-- \pagebreak -->
+Table 3. Characteristics of individuals in JCVI priority group 11 aged 30-39 years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of patients.
+```{r table3, include=FALSE}
+read_rds(here::here("output", "tables", str_c("summary_table_11.rds"))) %>%
+  my_flextable_1()
+```
+
+```{r padj_vars, include=FALSE}
+padj_vars_final <- list()
+for (g in c("02", "09", "11")) {
+  padj_vars_all <- read_rds(file = here::here("output", "tables", glue("table_{g}_padj.rds"))) %>%
+                        transmute(var = str_remove(characteristic, ": .+")) %>% 
+  unlist() %>% 
+  unname() %>% 
+  unique()
+
+source(here::here("analysis", "lib", "model_padj.R"))
+
+padj_vars <- as.character(as.list(args(model_padj))$adjust)[-1]
+
+out <- tibble(var = padj_vars) %>% 
+  sanitise_variables(var) %>%
+  filter(var %in% padj_vars_all) %>%
+  unlist() %>% 
+  unname()
+
+padj_vars_final[[g]] <- str_c(out, collapse = ", ")
+
+}
+```
+
+
+```{r or_table_function}
+or_table <- function(g) {
+  read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
+  rename(Unadjusted = OR) %>%
+  left_join(read_rds(file = here::here("output", "tables", glue("table_{g}_padj.rds"))) %>%
+  rename("Partially adjusted" = OR),
+  by = "characteristic") %>%
+  left_join(read_rds(file = here::here("output", "tables", glue("table_{g}_fadj.rds"))) %>%
+  rename("Fully adjusted" = OR),
+  by = "characteristic") %>%
+  rename(Characteristic = characteristic) %>%
+  my_flextable_2()
+}
+```
+
+
+\pagebreak
+Table 4. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years). Partially adjusted model adjusted for: `r padj_vars_final[["02"]]`.
+```{r table4, include=TRUE}
+or_table("02")
+```
+
+Table 5. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years). Partially adjusted model adjusted for: `r padj_vars_final[["09"]]`.
+```{r table5, include=TRUE}
+or_table("09")
+```
+
+Table 6. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years). Partially adjusted model adjusted for: `r padj_vars_final[["11"]]`.
+```{r table6, include=TRUE}
+or_table("11")
+```

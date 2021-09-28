@@ -92,7 +92,15 @@ model_postprocess <- function(.data) {
     ungroup() %>%
     
     mutate(across(c(estimate, lower, upper),
-                  ~format(round(exp(.),2),nsmall=2))) %>%
+                  ~str_trim(
+                    format(
+                      round(exp(.),2),
+                      nsmall=2
+                      ),
+                    side="both"
+                    )
+                  )
+           ) %>%
     mutate(OR = str_c(estimate, " (", lower, "-", upper, ")")) %>%
     # calculate odds ratio by taking exp(estimate)
     mutate(across(OR,

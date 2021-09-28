@@ -52,10 +52,10 @@ study = StudyDefinition(
         jcvi_group = '02' OR jcvi_group = '09' OR jcvi_group = '11'
         """,
         registered=patients.registered_as_of(
-            "elig_date - 1 day",
+            "elig_date + 84 days",
         ),
         died=patients.died_from_any_cause(
-            on_or_before="elig_date - 1 day",
+            on_or_before="elig_date + 84 days",
             returning="binary_flag",
         ),
         has_follow_up=patients.registered_with_one_practice_between(
@@ -197,7 +197,7 @@ study = StudyDefinition(
     ),
 
     # region - NHS England 9 regions
-    region = patients.registered_practice_as_of(
+    region=patients.registered_practice_as_of(
         "elig_date - 1 day",
         returning = "nuts1_region_name",
         return_expectations = {
@@ -329,13 +329,13 @@ study = StudyDefinition(
         between=["elig_date","elig_date + 84 days"],
     ),
 
-    #### censoring variables
+    #### censoring variables for cumulative incidence analysis - events after elig_date + 12 weeks
     # COVID related death
     death_with_covid_on_the_death_certificate_date=patients.with_these_codes_on_death_certificate(
         codelists.covid_codes,
         returning="date_of_death",
         date_format="YYYY-MM-DD",
-        between=["elig_date", end_date],
+        between=["elig_date + 85 days", end_date],
         # return_expectations={ # this generates an error (also in the following variables where I have commented out "return expectations")
         #     "date": {"earliest": "elig_date","latest": end_date},
         #     "rate": "uniform",
@@ -346,7 +346,7 @@ study = StudyDefinition(
     death_date=patients.died_from_any_cause(
         returning="date_of_death",
         date_format="YYYY-MM-DD",
-        between=["elig_date", end_date],
+        between=["elig_date + 85 days", end_date],
         # return_expectations={
         # "date": {"earliest":"elig_date", "latest":end_date},
         # "rate": "uniform",
@@ -376,7 +376,7 @@ study = StudyDefinition(
 
     # De-registration
     dereg_date=patients.date_deregistered_from_all_supported_practices(
-        between=["elig_date", end_date],
+        between=["elig_date + 85 days", end_date],
         date_format="YYYY-MM-DD",
         # return_expectations={
         #     "date": {"earliest": "elig_date", "latest": end_date,},

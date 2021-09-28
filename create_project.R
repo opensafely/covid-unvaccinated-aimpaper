@@ -5,7 +5,7 @@ library(glue)
 
 jcvi_groups <- c("02","09","11")
 
-model_types <- c("unadj", "padj", "fadj")
+model_types <- "unadj" #c("unadj", "padj", "fadj")
 
 # create action functions ----
 
@@ -105,7 +105,8 @@ actions_list <- splice(
     name = "design",
     run = "r:latest analysis/00_design.R",
     moderately_sensitive = list(
-      dates = "analysis/lib/dates.json"
+      dates_json = "analysis/lib/dates.json",
+      dates_rds = "analysis/lib/dates.rds"
     )
   ),
   
@@ -116,6 +117,7 @@ actions_list <- splice(
   action(
     name = "study_definition",
     run = "cohortextractor:latest generate_cohort --study-definition study_definition",
+    # dummy_data_file: "test-data/dummy-data.csv",
     needs = list("design"),
     highly_sensitive = list(
       cohort = "output/input.csv"

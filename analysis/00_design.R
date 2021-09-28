@@ -23,9 +23,10 @@ dates <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-10-10" #  12 weeks after all adults eligible - probably extend later
+    end_date = "2021-09-28" #  12 weeks after all adults eligible - probably extend later
   )
 
+readr::write_rds(dates, here::here("analysis", "lib", "dates.rds"))
 jsonlite::write_json(dates, path = here::here("analysis", "lib", "dates.json"), auto_unbox = TRUE, pretty=TRUE)
 
 # variable labels ----

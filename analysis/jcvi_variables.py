@@ -22,7 +22,7 @@ ref_age_2 = studydates["ref_age_1"] # reference date for calculating age for pha
 ref_cev = studydates["ref_cev"] # reference date for calculating eligibility for phase 1 group 4 (CEV)
 ref_ar = studydates["ref_ar"] # reference date for calculating eligibility for phase 1 group 5 (at-risk)
 start_date = studydates["start_date"] # start of phase 1
-end_date = studydates["end_date"] # end of followup
+end_date = "today" # end of followup
 pandemic_start = "2020-01-01"
 
 ## function to add days to a string date

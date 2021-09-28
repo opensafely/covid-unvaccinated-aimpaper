@@ -12,7 +12,7 @@ library(tidyverse)
 library(lubridate)
 library(readr)
 
-sessionInfo()
+dates <- read_rds(here::here("analysis", "lib", "dates.rds"))
 
 ## Output processed data to rds
 dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
@@ -211,27 +211,63 @@ all_variables <- list(
     "covid_hospital_admission_during_group"
   ),
   # variables indicating death or deregistration during eligibility period
-  censor_vars = c(
-    "death_with_covid_on_the_death_certificate_group",
-    "death_with_28_days_of_covid_positive_test",
-    "death_date",
-    "dereg_date"
+  # censor_vars = c(
+  #   "death_with_covid_on_the_death_certificate_group",
+  #   "death_with_28_days_of_covid_positive_test",
+  #   "death_date",
+  #   "dereg_date"
+  # ),
+  survival_vars = c(
+    "event_date", "status", "time"
   )
 )
 
 readr::write_rds(all_variables, here::here("analysis", "lib", "all_variables.rds"))
 
-# # REMOVE ONCE ELIG_DATES FIXED
-# elig_dates_tibble <- tribble(
-#   ~group, ~date,
-#   "02",  "2020-12-08",
-#   "09", "2021-03-19",
-#   "11, aged 38-39", "2021-05-13",
-#   "11, aged 36-37", "2021-05-19",
-#   "11, aged 34-35", "2021-05-21",
-#   "11, aged 32-33", "2021-05-25",
-#   "11, aged 30-31", "2021-05-26",
-# )
+# check format of elig_date
+elig_date_test <- data_extract %>%
+  select(elig_date) %>%
+  filter(!is.na(elig_date) &
+            str_detect(as.character(elig_date), "\\d{4}-\\d{2}-\\d{2}"))
+
+if (nrow(elig_date_test) == 0) {
+  
+  # REMOVE ONCE ELIG_DATES FIXED
+  elig_dates_tibble <- tribble(
+    ~group, ~date,
+    "02",  "2020-12-08",
+    "09", "2021-03-19",
+    "11, aged 38-39", "2021-05-13",
+    "11, aged 36-37", "2021-05-19",
+    "11, aged 34-35", "2021-05-21",
+    "11, aged 32-33", "2021-05-25",
+    "11, aged 30-31", "2021-05-26",
+  )
+  
+  
+  data_extract <- data_extract %>%
+    mutate(
+      
+      age_1 = sample(c(30:39, 50:54, 80:100), size = nrow(data_extract), replace=TRUE),
+      
+      jcvi_group = case_when(age_1 < 50 ~ "11",
+                             age_1 < 80 ~ "09",
+                             TRUE ~ "02"),
+      
+      age_2 = age_1,
+      preg_elig_group = if_else(sex=="F", preg_elig_group, 0L),
+
+      elig_date = as_date(case_when(jcvi_group %in% "02"  ~  elig_dates_tibble$date[1],
+                                    jcvi_group %in% "09"  ~ elig_dates_tibble$date[2],
+                                    age_2 %in% c(38,39) ~ elig_dates_tibble$date[3],
+                                    age_2 %in% c(36,37) ~ elig_dates_tibble$date[4],
+                                    age_2 %in% c(34,35) ~ elig_dates_tibble$date[5],
+                                    age_2 %in% c(32,33) ~ elig_dates_tibble$date[6],
+                                    age_2 %in% c(30,31) ~ elig_dates_tibble$date[7],
+                                    TRUE ~ NA_character_),
+                          format = "%Y-%m-%d") 
+    )
+}
 
 cat("#### process data ####\n")
 data_processed <- data_extract %>%
@@ -320,33 +356,51 @@ data_processed <- data_extract %>%
       TRUE ~ "Missing"),
 
     stp = factor(as.numeric(str_remove(stp, "STP")), levels = 1:10),
-
-    death_with_covid_on_the_death_certificate_group = if_else(
-      !is.na(death_with_covid_on_the_death_certificate_date) &
-        (death_with_covid_on_the_death_certificate_date <= elig_date + weeks(12)),
-      1L, 0L),
-
-    death_with_28_days_of_covid_positive_test = if_else(
-      (death_with_28_days_of_covid_positive_test == 1) &
-        !is.na(death_date) &
-        (death_date <= elig_date + weeks(12)),
-      1L, 0L),
-
-    death_date = if_else(
-      !is.na(death_date) &
-        (death_date <= elig_date + weeks(12)),
-      1L, 0L),
-
-    dereg_date = if_else(
-      !is.na(dereg_date) &
-        (dereg_date <= elig_date + weeks(12)),
+    
+    covid_vax_1_date_after = if_else(
+      !is.na(covid_vax_1_date_after) &
+        covid_vax_1_date_after > elig_date + weeks(12),
+      covid_vax_1_date_after,
+      NA_Date_),
+    
+    # survival_vars
+    event_date = pmin(
+      death_date, dereg_date, covid_vax_1_date_after, as.Date(dates$end_date), 
+      na.rm=TRUE
+      ),
+    time = as.numeric(event_date - elig_date),
+    status = if_else(
+      event_date == covid_vax_1_date & !is.na(covid_vax_1_date), 
       1L, 0L)
 
+    # death_with_covid_on_the_death_certificate_group = if_else(
+    #   !is.na(death_with_covid_on_the_death_certificate_date) &
+    #     (death_with_covid_on_the_death_certificate_date <= elig_date + weeks(12)),
+    #   1L, 0L),
+    # 
+    # death_with_28_days_of_covid_positive_test = if_else(
+    #   (death_with_28_days_of_covid_positive_test == 1) &
+    #     !is.na(death_date) &
+    #     (death_date <= elig_date + weeks(12)),
+    #   1L, 0L),
+    # 
+    # death_date = if_else(
+    #   !is.na(death_date) &
+    #     (death_date <= elig_date + weeks(12)),
+    #   1L, 0L),
+    # 
+    # dereg_date = if_else(
+    #   !is.na(dereg_date) &
+    #     (dereg_date <= elig_date + weeks(12)),
+    #   1L, 0L)
 
-  ) %>%
-  mutate(across(-c(age, patient_id), as.factor)) %>%
-  ## Exclusion criteria
-  filter(!is.na(sex), !is.na(ageband))
+
+  ) 
+ #%>%
+  # select(jcvi_group, all_of(unname(unlist(all_variables)))) %>%
+  # mutate(across(-c(age, patient_id, all_variables$survival_vars), as.factor)) %>%
+  # ## Exclusion criteria
+  # filter(!is.na(sex), !is.na(ageband))
 
 cat("#### define sample_and_weight function ####\n")
 # sample and weight from each level of outcome
@@ -400,7 +454,8 @@ data_processed_09 <- data_processed %>%
                                               "dem_vars",
                                               "clinical_vars",
                                               "covid_vars",
-                                              "censor_vars")])))) %>%
+                                              "censor_vars",
+                                              "survival_vars")])))) %>%
   sample_and_weight() %>%
   droplevels()
 

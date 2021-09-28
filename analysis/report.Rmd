@@ -2,7 +2,9 @@
 title: "AIM paper analysis"
 author: "Elsie Horne"
 date: "22/09/2021"
-output: pdf_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -36,7 +38,7 @@ my_flextable_1 <- function(.data) {
 my_flextable_2 <- function(.data) {
   .data %>%
     flextable() %>%
-    add_header_row(values = c("", "OR (95% CI)"), colwidths = c(1,3)) %>%
+    # add_header_row(values = c("", "OR (95% CI)"), colwidths = c(1,3)) %>%
     fontsize(size=10) %>%
     autofit() %>%
     theme_vanilla()
@@ -115,59 +117,31 @@ read_rds(here::here("output", "tables", str_c("summary_table_11.rds"))) %>%
   my_flextable_1()
 ```
 
-```{r padj_vars, include=FALSE}
-padj_vars_final <- list()
-for (g in c("02", "09", "11")) {
-  padj_vars_all <- read_rds(file = here::here("output", "tables", glue("table_{g}_padj.rds"))) %>%
-                        transmute(var = str_remove(characteristic, ": .+")) %>% 
-  unlist() %>% 
-  unname() %>% 
-  unique()
-
-source(here::here("analysis", "lib", "model_padj.R"))
-
-padj_vars <- as.character(as.list(args(model_padj))$adjust)[-1]
-
-out <- tibble(var = padj_vars) %>% 
-  sanitise_variables(var) %>%
-  filter(var %in% padj_vars_all) %>%
-  unlist() %>% 
-  unname()
-
-padj_vars_final[[g]] <- str_c(out, collapse = ", ")
-
-}
-```
-
-
 ```{r or_table_function}
 or_table <- function(g) {
   read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
-  rename(Unadjusted = OR) %>%
-  left_join(read_rds(file = here::here("output", "tables", glue("table_{g}_padj.rds"))) %>%
-  rename("Partially adjusted" = OR),
-  by = "characteristic") %>%
-  left_join(read_rds(file = here::here("output", "tables", glue("table_{g}_fadj.rds"))) %>%
-  rename("Fully adjusted" = OR),
-  by = "characteristic") %>%
-  rename(Characteristic = characteristic) %>%
+  rename(Characteristic = characteristic,
+         "OR (95% CI)" = OR) %>%
   my_flextable_2()
 }
 ```
 
 
 \pagebreak
-Table 4. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years). Partially adjusted model adjusted for: `r padj_vars_final[["02"]]`.
-```{r table4, include=TRUE}
+Table 4. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years).
+```{r table4, include=FALSE}
 or_table("02")
 ```
 
-Table 5. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years). Partially adjusted model adjusted for: `r padj_vars_final[["09"]]`.
+\pagebreak
+Table 5. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years). 
 ```{r table5, include=TRUE}
 or_table("09")
 ```
 
-Table 6. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years). Partially adjusted model adjusted for: `r padj_vars_final[["11"]]`.
+\pagebreak
+Table 6. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years).
 ```{r table6, include=TRUE}
 or_table("11")
 ```
+

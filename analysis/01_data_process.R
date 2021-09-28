@@ -177,6 +177,8 @@ all_variables <- list(
   ),
   # clinical variables
   clinical_vars = c(
+    "endoflife",
+    "admitted_unplanned",
     "bmi",
     "hypertension",
     "ssri",
@@ -207,6 +209,8 @@ all_variables <- list(
   covid_vars = c(
     "covid_positive_test_before_group",
     "covid_positive_test_during_group",
+    "covid_probable_before_group",
+    "covid_probable_during_group",
     "covid_hospital_admission_before_group",
     "covid_hospital_admission_during_group"
   ),

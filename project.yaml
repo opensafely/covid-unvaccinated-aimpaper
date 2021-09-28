@@ -33,17 +33,3 @@ actions:
     outputs:
       highly_sensitive:
         cohort: output/input.csv
-
-  ## # # # # # # # # # # # # # # # # # # # 
-  ## Process the data 
-  ## # # # # # # # # # # # # # # # # # # # 
-
-  process_data:
-    run: r:latest analysis/01_data_process.R
-    needs:
-    - study_definition
-    outputs:
-      highly_sensitive:
-        data: output/data/data_processed_*.rds
-      moderately_sensitive:
-        dates: output/data/elig_dates_tibble.rds

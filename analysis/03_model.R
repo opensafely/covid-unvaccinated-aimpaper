@@ -45,7 +45,7 @@ data_preprocessed <- model_preprocess(g=jcvi_group)
 
 ## empty tibble for results
 res <- list()
-covs <- names(data_preprocessed)[!(names(data_preprocessed) %in% c("vax_12", "weight"))]
+covs <- names(data_preprocessed)[!(names(data_preprocessed) %in% c("vax_12", "weight", all_variables$survival_vars))]
 
 cat(glue("#### run model ####\n"))
 if  (model_type %in% "fadj") {

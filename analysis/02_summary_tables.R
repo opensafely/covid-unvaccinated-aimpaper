@@ -62,7 +62,7 @@ summary_table <- bind_rows(
   
   # summarise all categorical variables
   lapply(
-    names(data)[!(names(data) %in% c("vax_12", "age", "weight"))], 
+    names(data)[!(names(data) %in% c("vax_12", "age", "weight", all_variables$survival_vars))], 
     function(x)
       data %>% 
       group_by(weight, vax_12, .data[[x]]) %>%

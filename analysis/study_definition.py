@@ -419,7 +419,7 @@ study = StudyDefinition(
         return_expectations={"incidence": 0.001},
     ),
     # unplanned hospital admission
-    admitted_unplanned_date=patients.admitted_to_hospital(
+    admitted_unplanned=patients.admitted_to_hospital(
         returning="binary_flag",
         between=["elig_date - 14 days", "elig_date + 84 days"],
         with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],

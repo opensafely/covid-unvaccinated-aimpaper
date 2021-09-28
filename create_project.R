@@ -179,6 +179,26 @@ actions_list <- splice(
                                   )
                   ), recursive = FALSE)
   ),
+  recursive = FALSE),
+  
+  comment("# # # # # # # # # # # # # # # # # # #",
+          "Cumulative incidence analysis",
+          "# # # # # # # # # # # # # # # # # # #"),
+  
+  unlist(lapply(c("jcvi_group", "elig_date"),
+                function(x)
+                  action(
+                    name = glue("cml_inc_model_{x}"),
+                    run = glue("r:latest analysis/04_cumulative_incidence.R"),
+                    needs = list("design", "study_definition", "process_data"),
+                    moderately_sensitive = list(
+                      model = glue("output/models/surv_model_{x}.rds"),
+                      cml_inc_plot = glue("output/models/cml_inc_plot_{x}.png"),
+                      cml_inc_events = glue("output/models/cml_inc_events_{x}.png"),
+                      cml_inc_censor = glue("output/models/cml_inc_censor_{x}.png")
+                    )
+                  )
+  ),
   recursive = FALSE)
   
   # ,comment("# # # # # # # # # # # # # # # # # # #",

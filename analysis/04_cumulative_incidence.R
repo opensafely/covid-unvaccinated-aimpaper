@@ -2,10 +2,12 @@
 # This script:
 # fits survival model where an event is vaccination after eligibility period
 # time 0 is elig_date + 12 weeks
+# stratified by group, specified in args (see below)
+# plots cumulative incidence 
 #
 # The script should be run via an action in the project.yaml
 # The script must be accompanied by one argument:
-# 1. jcvi_group or elig_group, the strata for the survival model
+# 1. jcvi_group or elig_date, the strata for the survival model
 # # # # # # # # # # # # # # # # # # # # #
 
 cat("#### import command-line arguments ####\n")
@@ -56,6 +58,8 @@ strata <- get_strata(group)
 
 fit <- survfit(as.formula(glue("Surv(time, status) ~ {group}")), 
                data = data_survival)
+
+write_rds(fit, here::here("output", "tables", glue("surv_model_{group}.rds")))
 
 # Plot cumulative events
 survplots <- ggsurvplot(fit, 

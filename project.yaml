@@ -108,3 +108,33 @@ actions:
         model: output/models/model_11_unadj_*.rds
         table: output/tables/table_11_unadj.rds
 
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Cumulative incidence analysis 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  cml_inc_model:
+    run: r:latest analysis/04_cumulative_incidence.R
+    needs:
+    - design
+    - study_definition
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/surv_model_jcvi_group.rds
+        cml_inc_plot: output/models/cml_inc_plot_jcvi_group.png
+        cml_inc_events: output/models/cml_inc_events_jcvi_group.png
+        cml_inc_censor: output/models/cml_inc_censor_jcvi_group.png
+
+  cml_inc_model:
+    run: r:latest analysis/04_cumulative_incidence.R
+    needs:
+    - design
+    - study_definition
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/surv_model_elig_date.rds
+        cml_inc_plot: output/models/cml_inc_plot_elig_date.png
+        cml_inc_events: output/models/cml_inc_events_elig_date.png
+        cml_inc_censor: output/models/cml_inc_censor_elig_date.png
+

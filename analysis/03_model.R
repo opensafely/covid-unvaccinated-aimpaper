@@ -37,6 +37,8 @@ source(here::here("analysis", "lib", glue("model_{model_type}.R")))
 source(here::here("analysis", "lib", "model_postprocess.R"))
 source(here::here("analysis", "lib", "sanitise_variables.R"))
 
+all_variables <- readr::read_rds(here::here("analysis", "lib", "all_variables.rds"))
+
 ## for logging
 cat(glue("#### JCVI group {jcvi_group} ####\n"))
 
@@ -45,7 +47,10 @@ data_preprocessed <- model_preprocess(g=jcvi_group)
 
 ## empty tibble for results
 res <- list()
-covs <- names(data_preprocessed)[!(names(data_preprocessed) %in% c("vax_12", "weight", all_variables$survival_vars))]
+covs <- names(data_preprocessed)[!(names(data_preprocessed) %in% c("vax_12", 
+                                                                   "weight", 
+                                                                   all_variables$survival_vars,
+                                                                   all_variables$id_vars))]
 
 cat(glue("#### run model ####\n"))
 if  (model_type %in% "fadj") {

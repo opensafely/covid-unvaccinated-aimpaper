@@ -131,7 +131,7 @@ actions_list <- splice(
   action(
     name = "process_data",
     run = glue("r:latest analysis/01_data_process.R"),
-    needs = list("study_definition"),
+    needs = list("design", "study_definition"),
     highly_sensitive = list(
       data = glue("output/data/data_processed_*.rds")
     ),

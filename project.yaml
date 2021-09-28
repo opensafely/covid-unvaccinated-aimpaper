@@ -33,3 +33,78 @@ actions:
     outputs:
       highly_sensitive:
         cohort: output/input.csv
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Process the data 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  process_data:
+    run: r:latest analysis/01_data_process.R
+    needs:
+    - design
+    - study_definition
+    outputs:
+      highly_sensitive:
+        data: output/data/data_processed_*.rds
+      moderately_sensitive:
+        dates: output/data/elig_dates_tibble.rds
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Summary tables for each jcvi_group 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  summary_table_02:
+    run: r:latest analysis/02_summary_tables.R 02
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        table: output/tables/summary_table_02.rds
+
+  summary_table_09:
+    run: r:latest analysis/02_summary_tables.R 09
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        table: output/tables/summary_table_09.rds
+
+  summary_table_11:
+    run: r:latest analysis/02_summary_tables.R 11
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        table: output/tables/summary_table_11.rds
+
+  ## # # # # # # # # # # # # # # # # # # # 
+  ## Models for each jcvi_group and model_type 
+  ## # # # # # # # # # # # # # # # # # # # 
+
+  model_02_unadj:
+    run: r:latest analysis/03_model.R 02 unadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_02_unadj_*.rds
+        table: output/tables/table_02_unadj.rds
+
+  model_09_unadj:
+    run: r:latest analysis/03_model.R 09 unadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_09_unadj_*.rds
+        table: output/tables/table_09_unadj.rds
+
+  model_11_unadj:
+    run: r:latest analysis/03_model.R 11 unadj
+    needs:
+    - process_data
+    outputs:
+      moderately_sensitive:
+        model: output/models/model_11_unadj_*.rds
+        table: output/tables/table_11_unadj.rds
+

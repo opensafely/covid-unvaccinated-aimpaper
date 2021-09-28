@@ -6,7 +6,7 @@ model_preprocess <- function(g) {
   data <- read_rds(here::here("output", "data", glue("data_processed_{g}.rds"))) %>%
     droplevels() %>%
     # remove continuous age and region
-    select(-age, -region) 
+    select(-age, -region, -all_of(c(all_variables$survival_vars, all_variables$id_vars)))
   
   cat(glue("#### check factors ####\n"))
   # check all variables are factors and stop if not

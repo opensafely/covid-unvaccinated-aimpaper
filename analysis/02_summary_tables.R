@@ -1,13 +1,3 @@
-
-
-##### mask small numbers!!
-
-# libraries
-library(tidyverse)
-library(readr)
-library(scales)
-library(glue)
-
 cat("#### import command-line arguments ####\n")
 args <- commandArgs(trailingOnly=TRUE)
 
@@ -18,11 +8,19 @@ if(length(args)==0){
   jcvi_group <- args[[1]]
 }
 
+# libraries
+library(tidyverse)
+library(readr)
+library(scales)
+library(glue)
+
 dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
 
 cat("#### import custom functions ####\n")
 source(here::here("analysis", "lib", "sanitise_variables.R"))
 source(here::here("analysis", "lib", "mask.R"))
+
+all_variables <- readr::read_rds(here::here("analysis", "lib", "all_variables.rds"))
 
 cat("#### load data for jcvi_group ####\n")
 data <- read_rds(here::here("output", "data", glue("data_processed_{jcvi_group}.rds")))
@@ -62,7 +60,10 @@ summary_table <- bind_rows(
   
   # summarise all categorical variables
   lapply(
-    names(data)[!(names(data) %in% c("vax_12", "age", "weight", all_variables$survival_vars))], 
+    names(data)[!(names(data) %in% c("vax_12", "age", "weight", 
+                                     all_variables$survival_vars,
+                                     all_variables$id_vars
+                                     ))], 
     function(x)
       data %>% 
       group_by(weight, vax_12, .data[[x]]) %>%
@@ -104,7 +105,7 @@ summary_table <- bind_rows(
     TRUE
     ~ str_c(variable, category, sep = ": "))) %>%
   select(characteristic, unvaccinated, vaccinated) %>% 
-  filter(characteristic != "Sex: M") %>%
+  # filter(characteristic != "Sex: M") %>%
   rename_with(str_to_sentence) 
 
 cat("#### save summary_table ####\n")

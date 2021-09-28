@@ -12,10 +12,12 @@ library(tidyverse)
 library(lubridate)
 library(readr)
 
-dates <- read_rds(here::here("analysis", "lib", "dates.rds"))
-
 ## Output processed data to rds
 dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
+
+## import dates
+# this is not working for some reason
+dates <- readr::read_rds(here::here("analysis", "lib", "dates.rds"))
 
 # Custom functions
 fct_case_when <- function(...) {
@@ -129,21 +131,24 @@ data_extract0 <- read_csv(
       covid_hospital_admission_during_group = col_integer(),
 
       ## died or deregistered variables
-      # COVID related death
-      death_with_covid_on_the_death_certificate_date = col_date(format="%Y-%m-%d"),
-      # Death within 28 days of a positive COVID test
-      death_with_28_days_of_covid_positive_test = col_integer(),
+      # # COVID related death
+      # death_with_covid_on_the_death_certificate_date = col_date(format="%Y-%m-%d"),
+      # # Death within 28 days of a positive COVID test
+      # death_with_28_days_of_covid_positive_test = col_integer(),
       # Deregistration date
       dereg_date = col_date(format="%Y-%m-%d"),
       # Death of any cause
-      death_date = col_date(format="%Y-%m-%d")
+      death_date = col_date(format="%Y-%m-%d"),
+      
+      # vairables for cumulative incidence
+      endoflife = col_integer(),
+      admitted_unplanned = col_integer(),
+      covid_probable_before_group = col_integer(),
+      covid_probable_during_group = col_integer()
+      
     ),
     na = character() # more stable to convert to missing later
     ) 
-    ### REMOVE THESE LINES WHEN RUN ON TPP DATA
-     # %>% mutate(jcvi_group %in% c("02", "09", "11"),
-     #       age_2 = age_1,
-     #       preg_elig_group = if_else(sex=="F", preg_elig_group, 0L))
 
 cat("#### parse NAs ####\n")
 data_extract <- data_extract0 %>%
@@ -159,7 +164,8 @@ cat("#### define variable groups ####\n")
 all_variables <- list(
   id_vars = c(
     "patient_id",
-    "jcvi_group"
+    "jcvi_group",
+    "elig_date"
   ),
   outcome = "vax_12",
   # age vars
@@ -365,7 +371,7 @@ data_processed <- data_extract %>%
     
     # date of vaccine or censoring
     event_date = pmin(
-      death_date, dereg_date, covid_vax_1_date_after, as.Date(dates$end_date), 
+      death_date, dereg_date, covid_vax_1_date_after, as.Date(dates$end_date), #as.Date("2021-09-28"),
       na.rm=TRUE
       ),
     
@@ -401,7 +407,7 @@ data_processed <- data_extract %>%
 
 
   ) %>%
-  select(jcvi_group, all_of(unname(unlist(all_variables)))) %>%
+  select(all_of(unname(unlist(all_variables)))) %>%
   mutate(across(-c(age, patient_id, all_variables$survival_vars), as.factor)) %>%
   ## Exclusion criteria
   filter(!is.na(sex), !is.na(ageband))
@@ -427,7 +433,8 @@ sample_and_weight <- function(.data, prob_0 = 1, prob_1 = 0.1) {
 cat("#### create data_processed_02 ####\n")
 data_processed_02 <- data_processed %>%
   filter(jcvi_group == "02") %>%
-  select(all_of(unname(unlist(all_variables[c("outcome",
+  select(all_of(unname(unlist(all_variables[c("id_vars",
+                                              "outcome",
                                               "age",
                                               "ageband",
                                               "dem_vars",
@@ -436,7 +443,8 @@ data_processed_02 <- data_processed %>%
                                               "longres_vars",
                                               "covid_vars",
                                               "survival_vars")])))) %>%
-  mutate(across(-c(age), as.factor)) %>%
+  mutate(across(-c(age, all_variables$survival_vars, all_variables$id_vars), 
+                as.factor)) %>%
   sample_and_weight() %>%
   droplevels()
 
@@ -452,7 +460,8 @@ data_processed_09 <- data_processed %>%
   filter_at(all_of(unname(unlist(all_variables[c("jcvi_vars","longres_vars")]))),
             all_vars(. == "0")) %>%
   filter(!(bmi %in% "Obese III (40+)")) %>%
-  select(all_of(unname(unlist(all_variables[c("outcome",
+  select(all_of(unname(unlist(all_variables[c("id_vars",
+                                              "outcome",
                                               "age",
                                               "ageband",
                                               "dem_vars",
@@ -460,6 +469,8 @@ data_processed_09 <- data_processed %>%
                                               "covid_vars",
                                               "censor_vars",
                                               "survival_vars")])))) %>%
+  mutate(across(-c(age, all_variables$survival_vars, all_variables$id_vars), 
+                as.factor)) %>%
   sample_and_weight() %>%
   droplevels()
 
@@ -470,7 +481,8 @@ data_processed_11 <- data_processed %>%
   filter_at(all_of(unname(unlist(all_variables[c("jcvi_vars","longres_vars")]))),
             all_vars(. == "0")) %>%
   filter(!(bmi %in% "Obese III (40+)")) %>%
-  select(all_of(unname(unlist(all_variables[c("outcome",
+  select(all_of(unname(unlist(all_variables[c("id_vars",
+                                              "outcome",
                                               "age",
                                               "ageband",
                                               "dem_vars",
@@ -478,6 +490,8 @@ data_processed_11 <- data_processed %>%
                                               "preg_vars",
                                               "covid_vars",
                                               "survival_vars")])))) %>%
+  mutate(across(-c(age, all_variables$survival_vars, all_variables$id_vars), 
+                as.factor)) %>%
   sample_and_weight() %>%
   droplevels()
 
@@ -495,9 +509,6 @@ elig_dates_tibble <- data_processed %>%
   select(jcvi_group, ageband, elig_date) %>%
   arrange(jcvi_group, ageband, elig_date)
 readr::write_rds(elig_dates_tibble, here::here("output", "data", "elig_dates_tibble.rds"))
-
-# split by vax_12 and select 10% of samples with vax_12 = "1!
-# create weight column
 
 cat("#### save datasets as .rds files ####\n")
 write_rds(data_processed_02, here::here("output", "data", "data_processed_02.rds"), compress = "gz")

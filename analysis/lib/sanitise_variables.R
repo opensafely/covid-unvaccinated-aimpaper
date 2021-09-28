@@ -2,6 +2,14 @@ sanitise_variables <- function(.data, var) {
   .data %>%
     mutate(across({{var}}, ~ case_when(. %in% c("sex", "region", "ethnicity", "hypertension")
                                        ~ str_to_sentence(.),
+                                       . %in% "endoflife"
+                                       ~ "End of life care while eligible",
+                                       . %in% "admitted_unplanned"
+                                       ~ "Unplanned hosp. admission while eligible",
+                                       . %in% "covid_probable_before_group"
+                                       ~ "Probable COVID before eligible",
+                                       . %in% "covid_probable_during_group"
+                                       ~ "Probable COVID while eligible",
                                        . %in% "ageband"
                                        ~ "Age group",
                                        . %in% "longres_group"
@@ -19,7 +27,7 @@ sanitise_variables <- function(.data, var) {
                                        . %in% "diab_group"
                                        ~ "Diabetes",
                                        . %in% "immuno_group"
-                                       ~ "Immunosupressed",
+                                       ~ "Immunosuppressed",
                                        . %in% "learndis_group"
                                        ~ "Learning disability",
                                        . %in% "resp_group"

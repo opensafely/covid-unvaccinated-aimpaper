@@ -344,16 +344,16 @@ study = StudyDefinition(
 
     #### censoring variables for cumulative incidence analysis - events after elig_date + 12 weeks
     # COVID related death
-    death_with_covid_on_the_death_certificate_date=patients.with_these_codes_on_death_certificate(
-        codelists.covid_codes,
-        returning="date_of_death",
-        date_format="YYYY-MM-DD",
-        between=["elig_date + 85 days", end_date],
-        # return_expectations={ # this generates an error (also in the following variables where I have commented out "return expectations")
-        #     "date": {"earliest": "elig_date","latest": end_date},
-        #     "rate": "uniform",
-        #     "incidence": 0.01},
-    ),
+    # death_with_covid_on_the_death_certificate_date=patients.with_these_codes_on_death_certificate(
+    #     codelists.covid_codes,
+    #     returning="date_of_death",
+    #     date_format="YYYY-MM-DD",
+    #     between=["elig_date + 85 days", end_date],
+    #     # return_expectations={ # this generates an error (also in the following variables where I have commented out "return expectations")
+    #     #     "date": {"earliest": "elig_date","latest": end_date},
+    #     #     "rate": "uniform",
+    #     #     "incidence": 0.01},
+    # ),
 
     # Death of any cause
     death_date=patients.died_from_any_cause(
@@ -368,24 +368,24 @@ study = StudyDefinition(
     ),
 
     # Death within 28 days of a positive COVID test
-    death_with_28_days_of_covid_positive_test=patients.satisfying(
-        """
-            death_date
-            AND 
-            positive_covid_test_prior_28_days
-        """, 
-        return_expectations={
-            "incidence": 0.05,
-        },
-        positive_covid_test_prior_28_days=patients.with_test_result_in_sgss(
-            pathogen="SARS-CoV-2",
-            test_result="positive",
-            returning="binary_flag",
-            between=["death_date - 28 days", "death_date"],
-            find_first_match_in_period=True,
-            restrict_to_earliest_specimen_date=False,
-        ),
-    ),
+    # death_with_28_days_of_covid_positive_test=patients.satisfying(
+    #     """
+    #         death_date
+    #         AND 
+    #         positive_covid_test_prior_28_days
+    #     """, 
+    #     return_expectations={
+    #         "incidence": 0.05,
+    #     },
+    #     positive_covid_test_prior_28_days=patients.with_test_result_in_sgss(
+    #         pathogen="SARS-CoV-2",
+    #         test_result="positive",
+    #         returning="binary_flag",
+    #         between=["death_date - 28 days", "death_date"],
+    #         find_first_match_in_period=True,
+    #         restrict_to_earliest_specimen_date=False,
+    #     ),
+    # ),
 
     # De-registration
     dereg_date=patients.date_deregistered_from_all_supported_practices(

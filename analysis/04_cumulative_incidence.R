@@ -22,6 +22,7 @@ if(length(args)==0){
 
 ## packages
 library(tidyverse)
+library(RColorBrewer)
 library(glue)
 library(survival)
 library(survminer)
@@ -32,6 +33,7 @@ dir.create(here::here("output", "figures"), showWarnings = FALSE, recursive=TRUE
 
 all_variables <- readr::read_rds(here::here("analysis", "lib", "all_variables.rds"))
 
+cat("#### bind processed datasets ####\n")
 data_survival <- bind_rows(
   read_rds(here::here("output", "data", glue("data_processed_02.rds"))),
   read_rds(here::here("output", "data", glue("data_processed_09.rds"))),
@@ -40,7 +42,8 @@ data_survival <- bind_rows(
   select(all_variables$id_vars, all_variables$survival_vars) %>%
   # time in weeks instead of days
   mutate(time = time/7)
-  
+
+cat("#### process args ####\n")  
 get_strata <- function(g) {
   out <- data_survival %>%
     rename(var = g) %>%
@@ -56,11 +59,13 @@ get_strata <- function(g) {
 
 strata <- get_strata(group)
 
+cat("#### fit survival model ####\n")
 fit <- survfit(as.formula(glue("Surv(time, status) ~ {group}")), 
                data = data_survival)
 
-write_rds(fit, here::here("output", "tables", glue("surv_model_{group}.rds")))
+write_rds(fit, here::here("output", "models", glue("surv_model_{group}.rds")))
 
+cat("#### generate plots ####\n")
 # Plot cumulative events
 survplots <- ggsurvplot(fit, 
                         break.time.by = 7,

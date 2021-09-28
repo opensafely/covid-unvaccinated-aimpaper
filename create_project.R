@@ -190,12 +190,15 @@ actions_list <- splice(
                   action(
                     name = glue("cml_inc_model_{x}"),
                     run = glue("r:latest analysis/04_cumulative_incidence.R"),
+                    arguments = x,
                     needs = list("design", "study_definition", "process_data"),
+                    highly_sensitive = list(
+                      model = glue("output/models/surv_model_{x}.rds")
+                    ),
                     moderately_sensitive = list(
-                      model = glue("output/models/surv_model_{x}.rds"),
-                      cml_inc_plot = glue("output/models/cml_inc_plot_{x}.png"),
-                      cml_inc_events = glue("output/models/cml_inc_events_{x}.png"),
-                      cml_inc_censor = glue("output/models/cml_inc_censor_{x}.png")
+                      cml_inc_plot = glue("output/figures/cml_inc_plot_{x}.png"),
+                      cml_inc_events = glue("output/figures/cml_inc_events_{x}.png"),
+                      cml_inc_censor = glue("output/figures/cml_inc_censor_{x}.png")
                     )
                   )
   ),

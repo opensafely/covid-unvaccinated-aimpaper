@@ -1,3 +1,12 @@
+# # # # # # # # # # # # # # # # # # # # #
+# This script:
+# generates a summary table of all variables for each of the jcvi groups included
+#
+# The script should be run via an action in the project.yaml
+# The script must be accompanied by one argument:
+# 1. JCVI group: 02, 09 or 11
+# # # # # # # # # # # # # # # # # # # # #
+
 cat("#### import command-line arguments ####\n")
 args <- commandArgs(trailingOnly=TRUE)
 

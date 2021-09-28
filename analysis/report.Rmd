@@ -4,7 +4,6 @@ author: "Elsie Horne"
 date: "22/09/2021"
 output:
   word_document: default
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}

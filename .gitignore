@@ -9,3 +9,6 @@ venv/
 .Rproj.user
 
 *.Rproj
+
+*.pdf
+*.docx

@@ -19,7 +19,8 @@ actions:
     run: r:latest analysis/00_design.R
     outputs:
       moderately_sensitive:
-        dates: analysis/lib/dates.json
+        dates_json: analysis/lib/dates.json
+        dates_rds: analysis/lib/dates.rds
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Study definition 
@@ -46,5 +47,3 @@ actions:
         data: output/data/data_processed_*.rds
       moderately_sensitive:
         dates: output/data/elig_dates_tibble.rds
-
-  

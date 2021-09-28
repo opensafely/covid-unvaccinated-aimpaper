@@ -218,7 +218,7 @@ all_variables <- list(
   #   "dereg_date"
   # ),
   survival_vars = c(
-    "event_date", "status", "time"
+    "baseline", "covid_vax_1_date_after", "event_date", "status", "time"
   )
 )
 
@@ -272,17 +272,6 @@ if (nrow(elig_date_test) == 0) {
 cat("#### process data ####\n")
 data_processed <- data_extract %>%
   mutate(
-
-    # # REMOVE ONCE ELIG_DATES FIXED (if keep change to age_1)
-    # elig_date = as_date(case_when(jcvi_group %in% "02"  ~  elig_dates_tibble$date[1],
-    #                               jcvi_group %in% "09"  ~ elig_dates_tibble$date[2],
-    #                               age_1 %in% c(38,39) ~ elig_dates_tibble$date[3],
-    #                               age_1 %in% c(36,37) ~ elig_dates_tibble$date[4],
-    #                               age_1 %in% c(34,35) ~ elig_dates_tibble$date[5],
-    #                               age_1 %in% c(32,33) ~ elig_dates_tibble$date[6],
-    #                               age_1 %in% c(30,31) ~ elig_dates_tibble$date[7],
-    #                               TRUE ~ NA_character_),
-    #                     format = "%Y-%m-%d"),
 
     age = if_else(jcvi_group %in% "11", age_2, age_1),
 
@@ -357,21 +346,33 @@ data_processed <- data_extract %>%
 
     stp = factor(as.numeric(str_remove(stp, "STP")), levels = 1:10),
     
-    covid_vax_1_date_after = if_else(
-      !is.na(covid_vax_1_date_after) &
-        covid_vax_1_date_after > elig_date + weeks(12),
-      covid_vax_1_date_after,
-      NA_Date_),
     
-    # survival_vars
+    #### variables for cumulative incidence
+    # baseline is 12 weeks after eligibility date
+    baseline = elig_date + weeks(12),
+    
+    # date of covid vaccine if occured after baseline
+    covid_vax_1_date_after = if_else(
+      !is.na(covid_vax_1_date) &
+        covid_vax_1_date > baseline,
+      covid_vax_1_date,
+      NA_Date_
+      ),
+    
+    # date of vaccine or censoring
     event_date = pmin(
       death_date, dereg_date, covid_vax_1_date_after, as.Date(dates$end_date), 
       na.rm=TRUE
       ),
-    time = as.numeric(event_date - elig_date),
+    
+    # time between baseline and event_date
+    time = as.numeric(event_date - baseline),
+    
+    # status of event
     status = if_else(
-      event_date == covid_vax_1_date & !is.na(covid_vax_1_date), 
-      1L, 0L)
+      event_date == covid_vax_1_date_after & !is.na(covid_vax_1_date_after), 
+      1L, 0L
+      )
 
     # death_with_covid_on_the_death_certificate_group = if_else(
     #   !is.na(death_with_covid_on_the_death_certificate_date) &
@@ -395,12 +396,11 @@ data_processed <- data_extract %>%
     #   1L, 0L)
 
 
-  ) 
- #%>%
-  # select(jcvi_group, all_of(unname(unlist(all_variables)))) %>%
-  # mutate(across(-c(age, patient_id, all_variables$survival_vars), as.factor)) %>%
-  # ## Exclusion criteria
-  # filter(!is.na(sex), !is.na(ageband))
+  ) %>%
+  select(jcvi_group, all_of(unname(unlist(all_variables)))) %>%
+  mutate(across(-c(age, patient_id, all_variables$survival_vars), as.factor)) %>%
+  ## Exclusion criteria
+  filter(!is.na(sex), !is.na(ageband))
 
 cat("#### define sample_and_weight function ####\n")
 # sample and weight from each level of outcome
@@ -431,7 +431,7 @@ data_processed_02 <- data_processed %>%
                                               "jcvi_vars",
                                               "longres_vars",
                                               "covid_vars",
-                                              "censor_vars")])))) %>%
+                                              "survival_vars")])))) %>%
   mutate(across(-c(age), as.factor)) %>%
   sample_and_weight() %>%
   droplevels()
@@ -463,10 +463,6 @@ cat("#### create data_processed_11 ####\n")
 data_processed_11 <- data_processed %>%
   filter(jcvi_group == "11") %>%
   # filter out patients who would have become eligible between the at risk
-  # eligibility date and their age-related eligibility date
-  # filter(if_all(all_of(unname(unlist(all_variables[c("jcvi_vars",
-  #                                                    "longres_vars")]))),
-  #               ~ . == "0")) %>%
   filter_at(all_of(unname(unlist(all_variables[c("jcvi_vars","longres_vars")]))),
             all_vars(. == "0")) %>%
   filter(!(bmi %in% "Obese III (40+)")) %>%
@@ -477,7 +473,7 @@ data_processed_11 <- data_processed %>%
                                               "clinical_vars",
                                               "preg_vars",
                                               "covid_vars",
-                                              "censor_vars")])))) %>%
+                                              "survival_vars")])))) %>%
   sample_and_weight() %>%
   droplevels()
 

@@ -313,6 +313,19 @@ study = StudyDefinition(
         between=["elig_date","elig_date + 84 days"],
         restrict_to_earliest_specimen_date=False,
     ),
+    # probable COVID before elig_date
+    covid_probable_before_group=patients.with_these_clinical_events(
+        codelists.covid_primary_care_probable_combined,
+        returning="binary_flag",
+        on_or_before="elig_date - 1 day",
+    ),
+
+    # probable COVID 12 weeks after elig_date
+    covid_probable_during_group=patients.with_these_clinical_events(
+       codelists.covid_primary_care_probable_combined,
+        returning="binary_flag",
+        between=["elig_date","elig_date + 84 days"],
+    ),
 
     # covid-related hospitalisation before elig_date
     covid_hospital_admission_before_group=patients.admitted_to_hospital(
@@ -384,7 +397,36 @@ study = StudyDefinition(
         # }
     ),
 
-    ##### clinical variables
+    #### possible contraindications for vaccination
+    # on end of life care (maybe too sick for vaccination)
+    # 2 weeks before to 12 weeks after
+    endoflife=patients.satisfying(
+        """
+        midazolam OR
+        endoflife_coding
+        """,
+        midazolam=patients.with_these_medications(
+            codelists.midazolam_codes,
+            returning="binary_flag",
+            between=["elig_date - 14 days", "elig_date + 84 days"]
+        ),
+        endoflife_coding=patients.with_these_clinical_events(
+            codelists.eol_codes,
+            returning="binary_flag",
+            between=["elig_date - 14 days", "elig_date + 84 days"]
+        ),
+
+        return_expectations={"incidence": 0.001},
+    ),
+    # unplanned hospital admission
+    admitted_unplanned_date=patients.admitted_to_hospital(
+        returning="binary_flag",
+        between=["elig_date - 14 days", "elig_date + 84 days"],
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification=["1"],
+    ),
+
+
 
     #### clinically extremely vulnerable group variables
     # clinically extremely vulnerable since ref_cev
@@ -609,6 +651,7 @@ study = StudyDefinition(
         return_expectations={"incidence": 0.01},
     ),
 
+    ##### other clinical variables
     # add variables from https://github.com/opensafely/nhs-covid-vaccination-coverage/blob/main/analysis/study_definition_delivery.py 
     # most are commented out as they are included in the variables used for defining the JCVI groups
     # only remaining are: dmards, ssri

@@ -12,19 +12,17 @@ import codelists
 # import json module
 import json
 
-# import the vairables for deriving JCVI groups
-from jcvi_variables import (
-    jcvi_variables, 
-    studydates,
-    start_date,
-    end_date,
-    pandemic_start,
-    ref_cev,
-    ref_ar,
-)
+## import study dates
+# change this in design.R if necessary
+with open("./analysis/lib/dates.json") as f:
+  studydates = json.load(f)
 
-# Eligibility date for JCVI group
-# elig_date= studydates["%placeholder_elig_date%"] # date at which group became eligible for vaccination
+# define variables explicitly
+ref_age_1 = studydates["ref_age_1"] # reference date for calculating age for phase 1 groups
+ref_age_2 = studydates["ref_age_1"] # reference date for calculating age for phase 2 groups
+start_date = studydates["start_date"] # start of phase 1
+end_date =  studydates["end_date"] # end of followup
+pandemic_start = "2020-01-01"
 
 # Notes:
 # for inequalities in the study definition, an extra expression is added to align with the comparison definitions in https://github.com/opensafely/covid19-vaccine-coverage-tpp-emis/blob/master/analysis/comparisons.py
@@ -45,11 +43,14 @@ study = StudyDefinition(
         AND
         has_follow_up = 1
         AND
-        (age_1 >= 16 AND age_1 < 120)
-        AND
         NOT died
-        AND 
-        jcvi_group = '02' OR jcvi_group = '09' OR jcvi_group = '11'
+        AND (
+            (age_1 >= 80 AND age_1 < 120 AND NOT longres_group) 
+            OR 
+            (age_1 >= 50 AND age_1 < 55 AND NOT (longres_group OR cev_group OR atrisk_group)) 
+            OR 
+            (age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR cev_group OR atrisk_group)) 
+            )
         """,
         registered=patients.registered_as_of(
             "elig_date + 84 days",
@@ -64,18 +65,43 @@ study = StudyDefinition(
             return_expectations={"incidence": 0.90},
             ),
     ),
-        
-    **jcvi_variables,
+
+     # age on phase 1 reference date
+    age_1=patients.age_as_of(
+        ref_age_1,
+        return_expectations={
+            "int": {"distribution": "population_ages"},
+            "rate": "universal",
+        },
+    ),
+
+    # age on phase 2 reference date
+    age_2=patients.age_as_of(
+        ref_age_2,
+        return_expectations={
+            "int": {"distribution": "population_ages"},
+            "rate": "universal",
+        },
+    ),
+
+    # patient sex
+    sex=patients.sex(
+        return_expectations={
+        "rate": "universal",
+        "category": {"ratios": {"M": 0.49, "F": 0.51}},
+        "incidence": 1,
+        }
+    ),
 
     elig_date=patients.categorised_as(
         {
-            "2020-12-08": "jcvi_group = '02'",
-            "2021-03-19": "jcvi_group = '09'",
-            "2021-05-13": "jcvi_group = '11' AND age_2 >= 38",
-            "2021-05-19": "jcvi_group = '11' AND age_2 >= 36 AND age_2 < 38",
-            "2021-05-21": "jcvi_group = '11' AND age_2 >= 34 AND age_2 < 36",
-            "2021-05-25": "jcvi_group = '11' AND age_2 >= 32 AND age_2 < 34",
-            "2021-05-26": "jcvi_group = '11' AND age_2 >= 30 AND age_2 < 32",
+            "2020-12-08": "age_1 >= 80 AND age_1",
+            "2021-03-19": "age_1 >= 50 AND age_1 < 55",
+            "2021-05-13": "age_2 >= 38 AND age_2 < 40",
+            "2021-05-19": "age_2 >= 36 AND age_2 < 38",
+            "2021-05-21": "age_2 >= 34 AND age_2 < 36",
+            "2021-05-25": "age_2 >= 32 AND age_2 < 34",
+            "2021-05-26": "age_2 >= 30 AND age_2 < 32",
             "2021-12-31": "DEFAULT",
         },
         return_expectations={
@@ -444,18 +470,6 @@ study = StudyDefinition(
     ),
 
     #### clinically extremely vulnerable group variables
-    # clinically extremely vulnerable since ref_cev
-    cev_ever=patients.with_these_clinical_events(
-        codelists.shield,
-        returning="binary_flag",
-        between=[ref_cev, "elig_date - 1 day"],
-        find_last_match_in_period=True,
-        # return_expectations={ 
-        #     "date": {"earliest": ref_cev, "latest": "elig_date - 1 day"},
-        #     "incidence": 0.02
-        #     },
-    ),
-
     cev_group=patients.satisfying(
         "severely_clinically_vulnerable AND NOT less_vulnerable",
 
@@ -463,7 +477,7 @@ study = StudyDefinition(
         severely_clinically_vulnerable=patients.with_these_clinical_events(
             codelists.shield,
             returning="binary_flag",
-            between=[ref_cev, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             find_last_match_in_period=True,
         ),
 
@@ -500,7 +514,7 @@ study = StudyDefinition(
         astadm=patients.with_these_clinical_events(
             codelists.astadm,
             returning="binary_flag",
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
         ),
         # Asthma systemic steroid prescription code in month 1
         astrxm1=patients.with_these_medications(
@@ -526,14 +540,14 @@ study = StudyDefinition(
     resp_group=patients.with_these_clinical_events(
         codelists.resp_cov,
         returning="binary_flag",
-        between=[ref_ar, "elig_date - 1 day"],
+        on_or_before="elig_date - 1 day",
     ),
 
     # Chronic Neurological Disease including Significant Learning Disorder
     cns_group=patients.with_these_clinical_events(
         codelists.cns_cov,
         returning="binary_flag",
-        between=[ref_ar, "elig_date - 1 day"],
+        on_or_before="elig_date - 1 day",
     ),
 
     # diabetes
@@ -546,14 +560,14 @@ study = StudyDefinition(
             codelists.diab,
             returning="date",
             find_last_match_in_period=True,
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             date_format="YYYY-MM-DD",
         ),
         dmres_date=patients.with_these_clinical_events(
             codelists.dmres,
             returning="date",
             find_last_match_in_period=True,
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             date_format="YYYY-MM-DD",
         ),
     ),
@@ -569,7 +583,7 @@ study = StudyDefinition(
             codelists.sev_mental,
             returning="date",
             find_last_match_in_period=True,
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             date_format="YYYY-MM-DD",
         ),
         # Remission codes relating to Severe Mental Illness
@@ -577,7 +591,7 @@ study = StudyDefinition(
             codelists.smhres,
             returning="date",
             find_last_match_in_period=True,
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             date_format="YYYY-MM-DD",
         ),
     ),
@@ -586,7 +600,7 @@ study = StudyDefinition(
     chd_group=patients.with_these_clinical_events(
         codelists.chd_cov,
         returning="binary_flag",
-        between=[ref_ar, "elig_date - 1 day"],
+        on_or_before="elig_date - 1 day",
     ),
 
     # Chronic kidney disease diagnostic codes
@@ -601,7 +615,7 @@ study = StudyDefinition(
             codelists.ckd15,
             returning="date",
             find_last_match_in_period=True,
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             date_format="YYYY-MM-DD",
         ),
         # Chronic kidney disease codes-stages 3 - 5
@@ -609,14 +623,14 @@ study = StudyDefinition(
             codelists.ckd35,
             returning="date",
             find_last_match_in_period=True,
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
             date_format="YYYY-MM-DD",
         ),
         # Chronic kidney disease diagnostic codes
         ckd=patients.with_these_clinical_events(
             codelists.ckd_cov,
             returning="binary_flag",
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
         ),
     ),
 
@@ -624,7 +638,7 @@ study = StudyDefinition(
     cld_group=patients.with_these_clinical_events(
         codelists.cld,
         returning="binary_flag",
-        between=[ref_ar, "elig_date - 1 day"],
+        on_or_before="elig_date - 1 day",
     ),
 
     # immunosuppressed
@@ -634,7 +648,7 @@ study = StudyDefinition(
         immdx=patients.with_these_clinical_events(
             codelists.immdx_cov,
             returning="binary_flag",
-            between=[ref_ar, "elig_date - 1 day"],
+            on_or_before="elig_date - 1 day",
         ),
         # Immunosuppression medication codes
         immrx=patients.with_these_medications(
@@ -648,14 +662,78 @@ study = StudyDefinition(
     spln_group=patients.with_these_clinical_events(
         codelists.spln_cov,
         returning="binary_flag",
-        between=[ref_ar, "elig_date - 1 day"],
+        on_or_before="elig_date - 1 day",
     ),
 
     # Wider Learning Disability
     learndis_group=patients.with_these_clinical_events(
         codelists.learndis,
         returning="binary_flag",
-        between=[ref_ar, "elig_date - 1 day"],
+        on_or_before="elig_date - 1 day",
+    ),
+
+    #
+    atrisk_group=patients.satisfying(
+             """
+             immuno_group OR
+             ckd_group OR
+             resp_group OR
+             diab_group OR
+             cld_group OR
+             cns_group OR
+             chd_group OR
+             spln_group OR
+             learndis_group OR
+             sevment_group OR
+             sevobese_group 
+            """,
+            return_expectations = {
+            "incidence": 0.01,
+            },
+        # severe obesity
+        sevobese_group=patients.satisfying(
+            """
+            (sev_obesity_date AND NOT bmi_date) OR
+            (sev_obesity_date > bmi_date) OR
+            bmi_value_temp >= 40
+            """,
+            bmi_stage_date=patients.with_these_clinical_events(
+                codelists.bmi_stage,
+                returning="date",
+                find_last_match_in_period=True,
+                on_or_before="elig_date - 1 day",
+                date_format="YYYY-MM-DD",
+            ),
+
+            sev_obesity_date=patients.with_these_clinical_events(
+                codelists.sev_obesity,
+                returning="date",
+                find_last_match_in_period=True,
+                ignore_missing_values=True,
+                between= ["bmi_stage_date", "elig_date - 1 day"],
+                date_format="YYYY-MM-DD",
+            ),
+
+            bmi_date=patients.with_these_clinical_events(
+                codelists.bmi,
+                returning="date",
+                ignore_missing_values=True,
+                find_last_match_in_period=True,
+                on_or_before="elig_date - 1 day",
+                date_format="YYYY-MM-DD",
+            ),
+
+            bmi_value_temp=patients.with_these_clinical_events(
+                codelists.bmi,
+                returning="numeric_value",
+                ignore_missing_values=True,
+                find_last_match_in_period=True,
+                on_or_before="elig_date - 1 day",
+                return_expectations={
+                    "float": {"distribution": "normal", "mean": 25, "stddev": 5},
+                },
+            ),
+        ),
     ),
 
     # Patients in long-stay nursing and residential care
@@ -685,7 +763,7 @@ study = StudyDefinition(
         return_expectations={"incidence": 0.01,},
     ),
 
-    # obesity
+    # obesity category
     bmi=patients.categorised_as(
         {
           "Missing": "DEFAULT",
@@ -696,7 +774,7 @@ study = StudyDefinition(
           # set minimum and maximum to avoid any impossibly extreme values being classified
         },
     bmi_value=patients.most_recent_bmi(
-      between=["elig_date - 5 years", "elig_date - 1 day"],
+      on_or_before="elig_date - 1 day",
       minimum_age_at_measurement=16
     ),
     return_expectations = {

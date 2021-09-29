@@ -116,9 +116,9 @@ data_extract0 <- read_csv(
       # clinically extremely vulnerable group
       cev_group = col_integer(),
       # # at risk group
-      # atrisk_group = col_character(),
+      atrisk_group = col_character(),
       # jcvi group
-      jcvi_group = col_character(),
+      # jcvi_group = col_character(),
 
       ## vaccination variables
       # First COVID vaccination date
@@ -272,8 +272,8 @@ if (nrow(elig_date_test) == 0) {
       age_2 = age_1,
       preg_elig_group = if_else(sex=="F", preg_elig_group, 0L),
 
-      elig_date = as_date(case_when(jcvi_group %in% "02"  ~  elig_dates_tibble$date[1],
-                                    jcvi_group %in% "09"  ~ elig_dates_tibble$date[2],
+      elig_date = as_date(case_when(age_1 >= 80 ~  elig_dates_tibble$date[1],
+                                    age_1 >= 50 ~ elig_dates_tibble$date[2],
                                     age_2 %in% c(38,39) ~ elig_dates_tibble$date[3],
                                     age_2 %in% c(36,37) ~ elig_dates_tibble$date[4],
                                     age_2 %in% c(34,35) ~ elig_dates_tibble$date[5],
@@ -288,7 +288,7 @@ cat("#### process data ####\n")
 data_processed <- data_extract %>%
   mutate(
 
-    age = if_else(jcvi_group %in% "11", age_2, age_1),
+    age = if_else(age_1 < 50, age_2, age_1),
 
     ageband = cut(
       age,
@@ -296,6 +296,11 @@ data_processed <- data_extract %>%
       labels = c("30-34", "35-39", "40-49", "50-54", "55-79", "80-84", "85-89", "90-94", "95+"),
       right = FALSE
     ),
+    
+    jcvi_group = case_when(age_1 >= 80 ~  "02",
+                           age_1 >= 50 ~ "09",
+                           age_2 >=30 ~ "11",
+                           TRUE ~ NA_character_),
 
     # Ethnicity
     ethnicity = if_else(is.na(ethnicity_6), ethnicity_6_sus, ethnicity_6),

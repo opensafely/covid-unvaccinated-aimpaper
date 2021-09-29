@@ -11,9 +11,11 @@
 library(tidyverse)
 library(lubridate)
 library(readr)
+library(glue)
 
-## Output processed data to rds
+## create folders for outputs
 dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
+dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
 # this is not working for some reason

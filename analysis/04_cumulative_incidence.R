@@ -60,6 +60,8 @@ get_strata <- function(g) {
 
 strata <- get_strata(group)
 
+title <- if_else(group == "jcvi_group", "JCVI Group", "Eligibility date")
+
 cat("#### fit survival model ####\n")
 fit <- survfit(as.formula(glue("Surv(time, status) ~ {group}")), 
                data = data_survival)
@@ -80,7 +82,7 @@ survplots <- ggsurvplot(fit,
                         fun = "event",
                         # aesthetics
                         xlab = "Time since end of eligibility period (weeks)",
-                        legend.title = "JCVI Group",
+                        legend.title = title,
                         legend.labs = strata,
                         ggtheme = theme_bw())
 

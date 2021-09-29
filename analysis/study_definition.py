@@ -43,7 +43,7 @@ study = StudyDefinition(
         AND
         has_follow_up = 1
         AND
-        NOT died
+        NOT died_before
         AND (
             (age_1 >= 80 AND age_1 < 120 AND NOT longres_group) 
             OR 
@@ -55,8 +55,8 @@ study = StudyDefinition(
         registered=patients.registered_as_of(
             "elig_date + 84 days",
         ),
-        died=patients.died_from_any_cause(
-            on_or_before="elig_date + 84 days",
+        died_before=patients.died_from_any_cause(
+            on_or_before="elig_date - 1 day",
             returning="binary_flag",
         ),
         has_follow_up=patients.registered_with_one_practice_between(
@@ -66,7 +66,7 @@ study = StudyDefinition(
             ),
     ),
 
-     # age on phase 1 reference date
+    # age on phase 1 reference date
     age_1=patients.age_as_of(
         ref_age_1,
         return_expectations={
@@ -93,6 +93,7 @@ study = StudyDefinition(
         }
     ),
 
+    # vaccine eligibility dates
     elig_date=patients.categorised_as(
         {
             "2020-12-08": "age_1 >= 80 AND age_1",
@@ -119,6 +120,12 @@ study = StudyDefinition(
             "incidence": 1,
         },
     ),
+
+    # died during eligibility period
+    died_during=patients.died_from_any_cause(
+            between=["elig_date", "elig_date + 84 days"],
+            returning="binary_flag",
+        ),
 
     #### patient demographics
     # ethnicity

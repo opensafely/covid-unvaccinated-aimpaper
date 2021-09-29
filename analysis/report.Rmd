@@ -3,9 +3,10 @@ title: "AIM paper analysis"
 author: "Elsie Horne"
 date: "22/09/2021"
 output:
-  word_document: default
-  html_document: default
+  pdf_document: default
 ---
+
+\textcolor{red}{ALL RESULTS IN THIS DOCUMENT ARE BASED ON DUMMY DATA}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE, message = FALSE, warning = FALSE)
@@ -46,25 +47,28 @@ my_flextable_2 <- function(.data) {
 ```
 
 
-## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination 
+## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination  
 
-### Methods
+### Methods  
 
 Inclusion criteria:
 
 - Individuals alive and registered at a single TPP practice between 1 January 2019 and 12 weeks after their date of eligibility for COVID-19 vaccination.
 - Individuals satisfying the criteria for one of the following:
-    - JCVI priority group 2 aged 80-120 years and not in a long term residential home (i.e. not in group 1, eligible from 8 December 2020)
-    - JCVI priority group 9 (aged 50-54 years and not in groups 1-8, eligible from 19 March 2021)
-    - JCVI priority group 11 (aged 30-39 years and not in groups 1-10, eligible from 13 - 26 May 2021)
+    - JCVI priority group 2, aged 80-120 years and not in a long term residential home (i.e. not in group 1, eligible from 8 December 2020)
+    - JCVI priority group 9 (i.e. aged 50-54 years and not in groups 1-8, eligible from 19 March 2021)
+    - JCVI priority group 11 (i.e. aged 30-39 years and not in groups 1-10, eligible from 13 - 26 May 2021)
 
-For individuals in JCVI priority group 11, eligibility date was dependent on age:
+For individuals in JCVI priority group 11, eligibility date was dependent on age.
+All eligibility dates are given in Table 1.
+
+Table 1. _Eligibility dates._
 ```{r elig_dates, include=TRUE}
-read_rds(here::here("output", "data", "elig_dates_tibble.rds")) %>%
+read_rds(here::here("output", "tables", "elig_dates_tibble.rds")) %>%
   my_flextable_1()
 ```
 
-#### Outcome
+#### Outcome  
 
 For the logistic regression the outcome was defined as:
 
@@ -80,9 +84,9 @@ Individuals were censored at the earliest of:
 - date of de-registration from TPP practice
 - 28 September 2021
 
-#### Covariates
+#### Covariates  
 
-The following clinical variables were defined based on definitions given in _COVID-19: the green book, chapter 14a_^[https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018444/Greenbook_chapter_14a_16Sept21.pdf]: severe asthma, chronic respiratory disease, chronic heart disease, chronic kidney disease, chronic liver disease, chronic neurological disease, diabetes (other endocrine disorders), immunosupressed, asplenia/dysfunction of spleen, severe mental illness.
+The following clinical covariates were defined based on definitions given in _COVID-19: the green book, chapter 14a_^[https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018444/Greenbook_chapter_14a_16Sept21.pdf]: severe asthma, chronic respiratory disease, chronic heart disease, chronic kidney disease, chronic liver disease, chronic neurological disease, diabetes (other endocrine disorders), immunosupressed, asplenia/dysfunction of spleen, severe mental illness.
 
 Covariates were defined based on information recorded up until the individual's eligibility date, with the following exceptions:
 
@@ -99,39 +103,42 @@ Covariates were defined based on information recorded up until the individual's 
     - COVID hospitalisation before eligible
     - COVID hospitalisation while eligible
 
-#### Analysis plan
+#### Analysis plan  
 
 - From the individuals that satisfy the inclusion criteria, and for each eligibility group:
     - Identify all unvaccinated individuals (no vaccination within 12 weeks of their eligibility date).
     - Randomly select 10% of the vaccinated individuals.
     - For JCVI group 11 only, randomly select 10% of the unvaccinated individuals.
 - Within each JCVI group:
-    - Generate summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients)
-    - Fit univariate logistic regression models for remaining unvaccinated (using inverse probability weights to correct for the random sampling of vaccinated patients) 
+    - Generate a summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients)
+    - Fit univariate logistic regression models for vaccination within 12 weeks of eligibility date (using inverse probability weights to correct for the random sampling of vaccinated patients) 
     - For the unvaccinated group, fit a survival model for subsequent vaccination (i.e. after the 12-week eligibility period) and plot cumulative incidence of subsequent vaccination
 
-### Results
+### Results  
 
-#### Summary tables
-Table 1. Characteristics of individuals in JCVI priority group 2 aged 80+ years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients.
+#### Summary tables  
+
+
+Table 2. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table1, include=TRUE}
 read_rds(here::here("output", "tables", str_c("summary_table_02.rds"))) %>%
   my_flextable_1()
 ```
 <!-- \pagebreak -->
-Table 2. Characteristics of individuals in JCVI priority group 9 aged 50-54 years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients.
+Table 3. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table2, include=FALSE}
 read_rds(here::here("output", "tables", str_c("summary_table_09.rds"))) %>%
   my_flextable_1()
 ```
 <!-- \pagebreak -->
-Table 3. Characteristics of individuals in JCVI priority group 11 aged 30-39 years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of patients.
+Table 4. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of patients._
 ```{r table3, include=FALSE}
 read_rds(here::here("output", "tables", str_c("summary_table_11.rds"))) %>%
   my_flextable_1()
 ```
 
-#### Logistic regression
+#### Logistic regression  
+
 
 ```{r or_table_function}
 or_table <- function(g) {
@@ -142,21 +149,19 @@ or_table <- function(g) {
 }
 ```
 
-
-\pagebreak
-Table 4. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years).
+Table 5. _Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years)._
 ```{r table4, include=TRUE}
 or_table("02")
 ```
 
 <!-- \pagebreak -->
-Table 5. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years). 
+Table 6. _Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years)._ 
 ```{r table5, include=FALSE}
 or_table("09")
 ```
 
 <!-- \pagebreak -->
-Table 6. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years).
+Table 7. _Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years)._
 ```{r table6, include=FALSE}
 or_table("11")
 ```
@@ -169,21 +174,20 @@ In particular:
 - Censor all groups ~8 weeks after the latest eligibility date, so they all have the same duration of follow-up?
 - JCVI groups (Figures 1-3) or eligibility dates (Figures 4-6)?
 
-![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_jcvi_group.png)
-Figure 1. Cumulative incidence plot stratified by JCVI group.
 
-![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_jcvi_group.png)
-Figure 2. Cumulative number of events stratified by JCVI group.
-
-![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_jcvi_group.png)
-Figure 3. Cumulative number of censoring stratified by JCVI group. (Note that the first column should all be zeros, this is just because of the dummy data.)
+![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_jcvi_group.png)
 
 
-![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_elig_date.png)
-Figure 4. Cumulative incidence plot stratified by eligibility date.
+![Cumulative number of events stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_jcvi_group.png)
 
-![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_elig_date.png)
-Figure 5. Cumulative number of events stratified by eligibility date.
 
-![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_elig_date.png)
-Figure 6. Cumulative number of censoring stratified by eligibility date. (Note that the first column should all be zeros, this is just because of the dummy data.)
+![Cumulative number of censoring stratified by JCVI group. (Note that the first column should all be zeros, this is just because of the dummy data.)](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_jcvi_group.png)
+
+
+![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_elig_date.png)
+
+
+![Cumulative number of events stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_elig_date.png)
+
+
+![Cumulative number of censoring stratified by eligibility date. (Note that the first column should all be zeros, this is just because of the dummy data.)](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_elig_date.png)

@@ -133,10 +133,11 @@ actions_list <- splice(
     run = glue("r:latest analysis/01_data_process.R"),
     needs = list("design", "study_definition"),
     highly_sensitive = list(
-      data = glue("output/data/data_processed_*.rds")
+      data = "output/data/data_processed_*.rds"
     ),
     moderately_sensitive = list(
-      dates = "output/data/elig_dates_tibble.rds"
+      elig_dates = "output/tables/elig_dates_tibble.rds",
+      death_counts = "output/tables/death_count_*.rds"
     )
     ),
   

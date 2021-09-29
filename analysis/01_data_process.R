@@ -46,6 +46,9 @@ data_extract0 <- read_csv(
       patient_id = col_integer(),
 
       elig_date = col_date(format="%Y-%m-%d"),
+      
+      # died during eligibility period - will remove these individuals after counting
+      died_during = col_integer(),
 
       ## Clinical/demographic variables
       sex = col_character(),
@@ -422,7 +425,7 @@ data_processed <- data_extract %>%
 
 
   ) %>%
-  select(all_of(unname(unlist(all_variables)))) %>%
+  select("died_during", all_of(unname(unlist(all_variables)))) %>%
   mutate(across(-c(age, patient_id, all_variables$survival_vars), as.factor)) %>%
   ## Exclusion criteria
   filter(!is.na(sex), !is.na(ageband))
@@ -445,9 +448,24 @@ sample_and_weight <- function(.data, prob_0 = 1, prob_1 = 0.1) {
 
 }
 
+cat("#### count and save the number who have died ####\n")
+death_count <- function(.data) {
+  group <- unique(.data$jcvi_group)
+  
+  out <- .data %>%
+    group_by(vax_12, died_during) %>%
+    count() %>%
+    ungroup()
+  
+  write_rds(out, here::here("output", "tables", glue("death_count_{group}.rds")))
+  
+  return(.data)
+}
+
 cat("#### create data_processed_02 ####\n")
 data_processed_02 <- data_processed %>%
   filter(jcvi_group == "02") %>%
+  death_count() %>%
   select(all_of(unname(unlist(all_variables[c("id_vars",
                                               "outcome",
                                               "age",
@@ -466,6 +484,7 @@ data_processed_02 <- data_processed %>%
 cat("#### create data_processed_09 ####\n")
 data_processed_09 <- data_processed %>%
   filter(jcvi_group == "09") %>%
+  death_count() %>%
   # filter out patients who would have become eligible between the at risk
   # eligibility date and their age-related eligibility date
   # filter(if_all(all_of(unname(unlist(all_variables[c("jcvi_vars",
@@ -492,6 +511,7 @@ data_processed_09 <- data_processed %>%
 cat("#### create data_processed_11 ####\n")
 data_processed_11 <- data_processed %>%
   filter(jcvi_group == "11") %>%
+  death_count() %>%
   # filter out patients who would have become eligible between the at risk
   filter_at(all_of(unname(unlist(all_variables[c("jcvi_vars","longres_vars")]))),
             all_vars(. == "0")) %>%
@@ -523,7 +543,7 @@ elig_dates_tibble <- data_processed %>%
   distinct(jcvi_group, ageband, elig_date) %>%
   select(jcvi_group, ageband, elig_date) %>%
   arrange(jcvi_group, ageband, elig_date)
-readr::write_rds(elig_dates_tibble, here::here("output", "data", "elig_dates_tibble.rds"))
+readr::write_rds(elig_dates_tibble, here::here("output", "tables", "elig_dates_tibble.rds"))
 
 cat("#### save datasets as .rds files ####\n")
 write_rds(data_processed_02, here::here("output", "data", "data_processed_02.rds"), compress = "gz")

@@ -59,7 +59,7 @@ study = StudyDefinition(
             returning="binary_flag",
         ),
         has_follow_up=patients.registered_with_one_practice_between(
-            start_date="elig_date - 1 year",
+            start_date="2019-01-01", #to capture flu_vaccine and gp_consultation_rate
             end_date="elig_date",
             return_expectations={"incidence": 0.90},
             ),
@@ -173,28 +173,28 @@ study = StudyDefinition(
     ),
 
     # STP (regional grouping of practices)
-    stp=patients.registered_practice_as_of(
-        "elig_date - 1 day",
-        returning="stp_code",
-        return_expectations={
-            "rate": "universal",
-            "category": {
-                "ratios": {
-                    "STP1": 0.1,
-                    "STP2": 0.1,
-                    "STP3": 0.1,
-                    "STP4": 0.1,
-                    "STP5": 0.1,
-                    "STP6": 0.1,
-                    "STP7": 0.1,
-                    "STP8": 0.1,
-                    "STP9": 0.1,
-                    "STP10": 0.1,
-                },
-                "incidence": 1,
-            },
-        },
-    ),
+    # stp=patients.registered_practice_as_of(
+    #     "elig_date - 1 day",
+    #     returning="stp_code",
+    #     return_expectations={
+    #         "rate": "universal",
+    #         "category": {
+    #             "ratios": {
+    #                 "STP1": 0.1,
+    #                 "STP2": 0.1,
+    #                 "STP3": 0.1,
+    #                 "STP4": 0.1,
+    #                 "STP5": 0.1,
+    #                 "STP6": 0.1,
+    #                 "STP7": 0.1,
+    #                 "STP8": 0.1,
+    #                 "STP9": 0.1,
+    #                 "STP10": 0.1,
+    #             },
+    #             "incidence": 1,
+    #         },
+    #     },
+    # ),
 
     # region - NHS England 9 regions
     region=patients.registered_practice_as_of(
@@ -324,7 +324,7 @@ study = StudyDefinition(
     covid_probable_during_group=patients.with_these_clinical_events(
        codelists.covid_primary_care_probable_combined,
         returning="binary_flag",
-        between=["elig_date","elig_date + 84 days"],
+        between=["elig_date", "elig_date + 84 days"],
     ),
 
     # covid-related hospitalisation before elig_date
@@ -426,7 +426,22 @@ study = StudyDefinition(
         with_patient_classification=["1"],
     ),
 
-
+    #### proxy measures of previous trust in healthcare
+    # flu vaccine in 2019/2020 period
+    flu_vaccine=patients.with_tpp_vaccination_record(
+        target_disease_matches="influenza",
+        between=["2019-09-01", "2020-04-01"],
+        returning="binary_flag",
+    ),
+    gp_consultation_rate=patients.with_gp_consultations(
+        between=["2019-01-01", "2019-12-31"],
+        returning='number_of_matches_in_period', 
+        return_expectations={
+            "int": {
+                "distribution": "normal", "mean": 5, "stddev": 1
+                }, 
+                "incidence": 1},
+    ),
 
     #### clinically extremely vulnerable group variables
     # clinically extremely vulnerable since ref_cev

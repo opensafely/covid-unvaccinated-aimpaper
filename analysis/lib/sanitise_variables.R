@@ -2,6 +2,10 @@ sanitise_variables <- function(.data, var) {
   .data %>%
     mutate(across({{var}}, ~ case_when(. %in% c("sex", "region", "ethnicity", "hypertension")
                                        ~ str_to_sentence(.),
+                                       . %in% "flu_vaccine"
+                                       ~ "Flu vaccine in 2019/2020 period",
+                                       . %in% "gp_consultation_rate"
+                                       ~ "GP consultations in 2019",
                                        . %in% "endoflife"
                                        ~ "End of life care while eligible",
                                        . %in% "admitted_unplanned"

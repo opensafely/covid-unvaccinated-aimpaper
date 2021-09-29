@@ -55,7 +55,7 @@ data_extract0 <- read_csv(
       # Index of multiple deprivation
       imd = col_integer(),
       # STP (regional grouping of practices)
-      stp = col_character(),
+      # stp = col_character(),
       # region
       region = col_character(),
       # rural urban
@@ -67,6 +67,10 @@ data_extract0 <- read_csv(
       age_2 = col_integer(),
 
       ## Clinical variables
+      flu_vaccine = col_integer(),
+      gp_consultation_rate = col_integer(),
+      endoflife = col_integer(),
+      admitted_unplanned = col_integer(),
       # Asthma diagnosis codes
       astdx = col_integer(),
       # BMI
@@ -141,8 +145,6 @@ data_extract0 <- read_csv(
       death_date = col_date(format="%Y-%m-%d"),
       
       # vairables for cumulative incidence
-      endoflife = col_integer(),
-      admitted_unplanned = col_integer(),
       covid_probable_before_group = col_integer(),
       covid_probable_during_group = col_integer()
       
@@ -178,11 +180,13 @@ all_variables <- list(
     "smoking_status",
     "imd",
     "rural_urban",
-    "stp",
+    # "stp",
     "region"
   ),
   # clinical variables
   clinical_vars = c(
+    "flu_vaccine",
+    "gp_consultation_rate",
     "endoflife",
     "admitted_unplanned",
     "bmi",
@@ -242,6 +246,7 @@ elig_date_test <- data_extract %>%
 
 if (nrow(elig_date_test) == 0) {
   
+  cat("#### fix dummy data ####\n")
   # REMOVE ONCE ELIG_DATES FIXED
   elig_dates_tibble <- tribble(
     ~group, ~date,
@@ -354,8 +359,13 @@ data_processed <- data_extract %>%
       region == "Yorkshire and The Humber" ~ "Yorkshire and the Humber",
       TRUE ~ "Missing"),
 
-    stp = factor(as.numeric(str_remove(stp, "STP")), levels = 1:10),
+    # stp = factor(as.numeric(str_remove(stp, "STP")), levels = 1:10),
     
+    gp_consultation_rate = cut(
+      gp_consultation_rate,
+      breaks = c(-Inf, 0, 3, 6, Inf),
+      labels = c("0", "1-3", "4-6", "7+"),
+      ),
     
     #### variables for cumulative incidence
     # baseline is 12 weeks after eligibility date

@@ -1,3 +1,7 @@
 # ensure unix line endings on windows for files that need them.
 *.sh eol=lf
 codelists/* eol=lf
+
+# Linguist settings
+*.html linguist-vendored
+*.[Rr]md linguist-detectable

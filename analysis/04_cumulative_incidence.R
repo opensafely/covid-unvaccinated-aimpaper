@@ -39,6 +39,7 @@ data_survival <- bind_rows(
   read_rds(here::here("output", "data", glue("data_processed_09.rds"))),
   read_rds(here::here("output", "data", glue("data_processed_11.rds")))
 ) %>%
+  filter(vax_12 == "0") %>%
   select(all_variables$id_vars, all_variables$survival_vars) %>%
   # time in weeks instead of days
   mutate(time = time/7)

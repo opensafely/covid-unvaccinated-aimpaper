@@ -3,6 +3,7 @@ title: "AIM paper analysis"
 author: "Elsie Horne"
 date: "22/09/2021"
 output:
+  word_document: default
   html_document: default
 ---
 
@@ -53,7 +54,7 @@ Inclusion criteria:
 
 - Individuals alive and registered at a single TPP practice between 1 January 2019 and 12 weeks after their date of eligibility for COVID-19 vaccination.
 - Individuals satisfying the criteria for one of the following:
-    - JCVI priority group 2 and aged 80-120 years (and not in group 1, eligible from 8 December 2020)
+    - JCVI priority group 2 aged 80-120 years and not in a long term residential home (i.e. not in group 1, eligible from 8 December 2020)
     - JCVI priority group 9 (aged 50-54 years and not in groups 1-8, eligible from 19 March 2021)
     - JCVI priority group 11 (aged 30-39 years and not in groups 1-10, eligible from 13 - 26 May 2021)
 
@@ -83,32 +84,35 @@ Individuals were censored at the earliest of:
 
 The following clinical variables were defined based on definitions given in _COVID-19: the green book, chapter 14a_^[https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018444/Greenbook_chapter_14a_16Sept21.pdf]: severe asthma, chronic respiratory disease, chronic heart disease, chronic kidney disease, chronic liver disease, chronic neurological disease, diabetes (other endocrine disorders), immunosupressed, asplenia/dysfunction of spleen, severe mental illness.
 
-All clinical and demographic covariates were defined based on information up until the individual's eligibility date.
+Covariates were defined based on information recorded up until the individual's eligibility date, with the following exceptions:
 
-Covariates related to COVID infection were split according to whether they occurred before the eligibility date or in the 12-week period after the eligibility date:
-
-- COVID +ve test before eligible
-- COVID +ve test while eligible
-- COVID hospitalisation before eligible
-- COVID hospitalisation while eligible
-
-Covariates relating to death or deregistration were defined during the 12-week period after the eligibility date:
-
-- Death while eligible (COVID on certificate)
-- Death while eligible (COVID +ve within 28 days)
-- Death while eligible (any cause)
-- Deregistered while eligible
+- The the number of GP consultations that occurred between 1 January 2019 and 31 December 2019
+- Vaccination against influenza between 1 September 2019 and 1 April 2020
+- The following covariates relating to serious illness that may be contraindicate vaccination were defined based on information recorded between 2 weeks before the eligibility date up until 12 weeks after:
+    - End-of-life care
+    - Unplanned hospital admission
+- The following covariates relating to COVID infection were split according to whether they occurred any time before the eligibility date or in the 12-week period after the eligibility date:
+    - COVID +ve test before eligible
+    - COVID +ve test while eligible
+    - probable COVID before eligible
+    - probable COVID while eligible
+    - COVID hospitalisation before eligible
+    - COVID hospitalisation while eligible
 
 #### Analysis plan
 
 - From the individuals that satisfy the inclusion criteria, and for each eligibility group:
-    - identify all unvaccinated individuals (no vaccination within 12 weeks of their eligibility date) 
-    - randomly select 10% of the individuals who received a first vaccination within 12 weeks of their eligibility date
-- Generate summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients)
-- Fit logistic regression models for remaining unvaccinated (using inverse probability weights to correct for the random sampling of vaccinated patients) 
+    - Identify all unvaccinated individuals (no vaccination within 12 weeks of their eligibility date).
+    - Randomly select 10% of the vaccinated individuals.
+    - For JCVI group 11 only, randomly select 10% of the unvaccinated individuals.
+- Within each JCVI group:
+    - Generate summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients)
+    - Fit univariate logistic regression models for remaining unvaccinated (using inverse probability weights to correct for the random sampling of vaccinated patients) 
+    - For the unvaccinated group, fit a survival model for subsequent vaccination (i.e. after the 12-week eligibility period) and plot cumulative incidence of subsequent vaccination
 
 ### Results
 
+#### Summary tables
 Table 1. Characteristics of individuals in JCVI priority group 2 aged 80+ years. 'Unvaccinated' = patients who did not receive a COVID vaccine within 12 weeks of becoming eligible; 'Vaccinated' otherwise. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients.
 ```{r table1, include=TRUE}
 read_rds(here::here("output", "tables", str_c("summary_table_02.rds"))) %>%
@@ -127,6 +131,8 @@ read_rds(here::here("output", "tables", str_c("summary_table_11.rds"))) %>%
   my_flextable_1()
 ```
 
+#### Logistic regression
+
 ```{r or_table_function}
 or_table <- function(g) {
   read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
@@ -139,19 +145,45 @@ or_table <- function(g) {
 
 \pagebreak
 Table 4. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years).
-```{r table4, include=FALSE}
+```{r table4, include=TRUE}
 or_table("02")
 ```
 
-\pagebreak
+<!-- \pagebreak -->
 Table 5. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years). 
-```{r table5, include=TRUE}
+```{r table5, include=FALSE}
 or_table("09")
 ```
 
-\pagebreak
+<!-- \pagebreak -->
 Table 6. Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years).
-```{r table6, include=TRUE}
+```{r table6, include=FALSE}
 or_table("11")
 ```
 
+#### Cumulative incidence
+
+Let me know if you recommend any changes to the plots.
+In particular:
+
+- Censor all groups ~8 weeks after the latest eligibility date, so they all have the same duration of follow-up?
+- JCVI groups (Figures 1-3) or eligibility dates (Figures 4-6)?
+
+![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_jcvi_group.png)
+Figure 1. Cumulative incidence plot stratified by JCVI group.
+
+![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_jcvi_group.png)
+Figure 2. Cumulative number of events stratified by JCVI group.
+
+![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_jcvi_group.png)
+Figure 3. Cumulative number of censoring stratified by JCVI group. (Note that the first column should all be zeros, this is just because of the dummy data.)
+
+
+![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_elig_date.png)
+Figure 4. Cumulative incidence plot stratified by eligibility date.
+
+![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_elig_date.png)
+Figure 5. Cumulative number of events stratified by eligibility date.
+
+![alt text here](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_elig_date.png)
+Figure 6. Cumulative number of censoring stratified by eligibility date. (Note that the first column should all be zeros, this is just because of the dummy data.)

@@ -68,7 +68,7 @@ write_rds(fit, here::here("output", "models", glue("surv_model_{group}.rds")))
 cat("#### generate plots ####\n")
 # Plot cumulative events
 survplots <- ggsurvplot(fit, 
-                        break.time.by = 7,
+                        break.time.by = 4,
                         xlim = c(0,max(data_survival$time)),
                         conf.int = TRUE,
                         palette = brewer.pal(n = length(strata), name = "Dark2"),

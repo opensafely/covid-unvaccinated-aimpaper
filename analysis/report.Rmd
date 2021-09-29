@@ -51,11 +51,11 @@ my_flextable_2 <- function(.data) {
 
 Inclusion criteria:
 
-- Individuals alive and registered at a single TPP practice for at least 1 year prior to vaccine eligibility date
+- Individuals alive and registered at a single TPP practice between 1 January 2019 and 12 weeks after their date of eligibility for COVID-19 vaccination.
 - Individuals satisfying the criteria for one of the following:
-    - JCVI priority group 2 (80-120 years and not in group 1, eligible from 8th December 2020)
-    - JCVI priority group 9 (50-54 years and not in groups 1-8, eligible from 19th March 2021)
-    - JCVI priority group 11 (30-39 years and not in groups 1-10, eligible from 13th - 26th May 2021)
+    - JCVI priority group 2 and aged 80-120 years (and not in group 1, eligible from 8 December 2020)
+    - JCVI priority group 9 (aged 50-54 years and not in groups 1-8, eligible from 19 March 2021)
+    - JCVI priority group 11 (aged 30-39 years and not in groups 1-10, eligible from 13 - 26 May 2021)
 
 For individuals in JCVI priority group 11, eligibility date was dependent on age:
 ```{r elig_dates, include=TRUE}
@@ -65,8 +65,19 @@ read_rds(here::here("output", "data", "elig_dates_tibble.rds")) %>%
 
 #### Outcome
 
+For the logistic regression the outcome was defined as:
+
 - 0 if no record of COVID vaccination up until 12 weeks after eligibility date
-- 1 if record of any brand of COVID vaccination any time up until 12 weeks after eligibility date
+- 1 if record of any brand of COVID vaccination any time up until 12 weeks after eligibility date (vaccination may occur before eligibility date)
+
+For the survival analysis, the event of interest was the date of vaccination against COVID-19 (any brand).
+Time zero was defined as 12 weeks after becoming eligible for COVID-19 vaccination.
+Follow-up was measured in weeks from time zero to the event of interest.
+Individuals were censored at the earliest of:
+
+- date of death
+- date of de-registration from TPP practice
+- 28 September 2021
 
 #### Covariates
 

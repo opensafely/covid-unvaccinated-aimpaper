@@ -200,7 +200,7 @@ actions_list <- splice(
                     ),
                     moderately_sensitive = list(
                       cml_inc_plot = glue("output/figures/cml_inc_plot_{x}.png"),
-                      survtable = glue("output/figures/survtable_{x}.csv")
+                      survtable = glue("output/tables/survtable_{x}.csv")
                     )
                   )
   ),

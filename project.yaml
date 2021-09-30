@@ -128,7 +128,7 @@ actions:
         model: output/models/surv_model_jcvi_group.rds
       moderately_sensitive:
         cml_inc_plot: output/figures/cml_inc_plot_jcvi_group.png
-        survtable: output/figures/survtable_jcvi_group.csv
+        survtable: output/tables/survtable_jcvi_group.csv
 
   cml_inc_model_elig_date:
     run: r:latest analysis/04_cumulative_incidence.R elig_date
@@ -141,5 +141,5 @@ actions:
         model: output/models/surv_model_elig_date.rds
       moderately_sensitive:
         cml_inc_plot: output/figures/cml_inc_plot_elig_date.png
-        survtable: output/figures/survtable_elig_date.csv
+        survtable: output/tables/survtable_elig_date.csv
 

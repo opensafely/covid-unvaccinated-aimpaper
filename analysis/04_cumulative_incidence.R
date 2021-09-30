@@ -30,6 +30,7 @@ library(survminer)
 ## Create output directory
 dir.create(here::here("output", "models"), showWarnings = FALSE, recursive=TRUE)
 dir.create(here::here("output", "figures"), showWarnings = FALSE, recursive=TRUE)
+dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
 
 all_variables <- readr::read_rds(here::here("analysis", "lib", "all_variables.rds"))
 

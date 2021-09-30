@@ -18,7 +18,6 @@ dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
 dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
-# this is not working for some reason
 dates <- readr::read_rds(here::here("analysis", "lib", "dates.rds"))
 
 # Custom functions
@@ -459,7 +458,7 @@ death_count <- function(.data) {
     count() %>%
     ungroup()
   
-  write_rds(out, here::here("output", "tables", glue("death_count_{group}.rds")))
+  write_csv(out, here::here("output", "tables", glue("death_count_{group}.csv")))
   
   return(.data)
 }
@@ -545,7 +544,7 @@ elig_dates_tibble <- data_processed %>%
   distinct(jcvi_group, ageband, elig_date) %>%
   select(jcvi_group, ageband, elig_date) %>%
   arrange(jcvi_group, ageband, elig_date)
-readr::write_rds(elig_dates_tibble, here::here("output", "tables", "elig_dates_tibble.rds"))
+readr::write_csv(elig_dates_tibble, here::here("output", "tables", "elig_dates_tibble.csv"))
 
 cat("#### save datasets as .rds files ####\n")
 write_rds(data_processed_02, here::here("output", "data", "data_processed_02.rds"), compress = "gz")

@@ -86,14 +86,10 @@ survplots <- ggsurvplot(fit,
                         legend.labs = strata,
                         ggtheme = theme_bw())
 
+
 ggsave(filename=here::here("output", "figures", glue("cml_inc_plot_{group}.png")), 
        plot = survplots$plot, 
        width=14, height=12, units="cm")
 
-ggsave(filename=here::here("output", "figures", glue("cml_inc_events_{group}.png")), 
-       plot = survplots$cumevents, 
-       width=14, height=8, units="cm")
-
-ggsave(filename=here::here("output", "figures", glue("cml_inc_censor_{group}.png")), 
-       plot = survplots$ncensor.plot, 
-       width=14, height=8, units="cm")
+readr::write_csv(survplots$data.survtable,
+                 here::here("output", "tables", "survtable_{group}.csv"))

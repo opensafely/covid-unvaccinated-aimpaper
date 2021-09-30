@@ -6,7 +6,24 @@ output:
   pdf_document: default
 ---
 
+## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination  
+
 \textcolor{red}{ALL RESULTS IN THIS DOCUMENT ARE BASED ON DUMMY DATA}
+
+Note: there is a very slight error in _study_definition.py_
+The line^[https://github.com/opensafely/covid-unvaccinated-aimpaper/blob/96000eac92e8dca80a9792cc1b06ebb34e255fd2/analysis/study_definition.py#L52]:
+
+`(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR cev_group OR atrisk_group)`
+
+should read:
+
+`(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR (cev_group AND NOT preg_elig_group) OR atrisk_group)`
+
+The only errors would be women who satisfy the following criteria:
+
+`cev_group AND preg_elig_group AND NOT atrisk_group`
+
+I'm not sure it's even possible to be `cev_group AND NOT atrisk_group`, but can update and rerun if others think necessary. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE, message = FALSE, warning = FALSE)
@@ -35,19 +52,8 @@ my_flextable_1 <- function(.data) {
     autofit() %>%
     theme_vanilla()
 }
-
-my_flextable_2 <- function(.data) {
-  .data %>%
-    flextable() %>%
-    # add_header_row(values = c("", "OR (95% CI)"), colwidths = c(1,3)) %>%
-    fontsize(size=10) %>%
-    autofit() %>%
-    theme_vanilla()
-}
 ```
 
-
-## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination  
 
 ### Methods  
 
@@ -64,7 +70,7 @@ All eligibility dates are given in Table 1.
 
 Table 1. _Eligibility dates._
 ```{r elig_dates, include=TRUE}
-read_rds(here::here("output", "tables", "elig_dates_tibble.rds")) %>%
+read_csv(here::here("output", "tables", "elig_dates_tibble.csv")) %>%
   my_flextable_1()
 ```
 
@@ -116,58 +122,74 @@ Covariates were defined based on information recorded up until the individual's 
 
 ### Results  
 
-#### Summary tables  
+#### Sample selection
+
+Table 2. _Number of patients in each JCVI group who were excluded due to death (of any cause) within the 12 week period starting on their eligibility date. (This table includes all individuals, no random sampling.)_
+```{r, include=TRUE}
+bind_rows(
+  read_csv(here::here("output", "tables", glue("death_count_02.csv"))) %>% mutate(jcvi_group="02"),
+  read_csv(here::here("output", "tables", glue("death_count_09.csv"))) %>% mutate(jcvi_group="09"),
+  read_csv(here::here("output", "tables", glue("death_count_11.csv"))) %>% mutate(jcvi_group="11")
+) %>%
+  pivot_wider(names_from = vax_12, values_from = n) %>%
+  group_by(jcvi_group) %>%
+  rename(Unvaccinated="0", Vaccinated="1") %>%
+  mutate(
+    across(c(Unvaccinated, Vaccinated),
+           ~str_c(scales::comma(., accuracy = 1), " (", round(100*./sum(.),0), ")"))
+    ) %>%
+  ungroup() %>%
+  mutate(
+    across(died_during,
+           ~if_else(. == "0", "Included", "Excluded due to death during eligibility period")
+                )) %>%
+  select(`JCVI Group` = jcvi_group, Status = died_during, everything()) %>%
+  my_flextable_1()
+```
 
 
-Table 2. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+#### Summary tables (including logistic regression)   
+  
+
+Table 3. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table1, include=TRUE}
-read_rds(here::here("output", "tables", str_c("summary_table_02.rds"))) %>%
-  my_flextable_1()
-```
-<!-- \pagebreak -->
-Table 3. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
-```{r table2, include=FALSE}
-read_rds(here::here("output", "tables", str_c("summary_table_09.rds"))) %>%
-  my_flextable_1()
-```
-<!-- \pagebreak -->
-Table 4. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. Age is summarised as mean (SD), all other characteristics are n (%). Inverse probability weights used to correct for the random sampling of patients._
-```{r table3, include=FALSE}
-read_rds(here::here("output", "tables", str_c("summary_table_11.rds"))) %>%
-  my_flextable_1()
-```
-
-#### Logistic regression  
-
-
-```{r or_table_function}
-or_table <- function(g) {
-  read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
+g <- "02"
+read_csv(here::here("output", "tables", glue("summary_table_{g}.csv"))) %>%
+  full_join(
+    read_csv(file = here::here("output", "tables", glue("table_{g}_unadj.csv"))) %>%
   rename(Characteristic = characteristic,
-         "OR (95% CI)" = OR) %>%
-  my_flextable_2()
-}
+         "OR (95% CI)" = OR)
+  ) %>%
+  my_flextable_1()
+```
+\pagebreak
+Table 4. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+```{r table2, include=TRUE}
+g <- "09"
+read_rds(here::here("output", "tables", glue("summary_table_{g}.rds"))) %>%
+  full_join(
+    read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
+  rename(Characteristic = characteristic,
+         "OR (95% CI)" = OR)
+  ) %>%
+  my_flextable_1()
+```
+\pagebreak
+Table 5. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+```{r table3, include=TRUE}
+g <- "11"
+read_rds(here::here("output", "tables", glue("summary_table_{g}.rds"))) %>%
+  full_join(
+    read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
+  rename(Characteristic = characteristic,
+         "OR (95% CI)" = OR)
+  ) %>%
+  my_flextable_1()
 ```
 
-Table 5. _Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 2 aged 80+ years)._
-```{r table4, include=TRUE}
-or_table("02")
-```
-
-<!-- \pagebreak -->
-Table 6. _Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 9 aged 50-54 years)._ 
-```{r table5, include=FALSE}
-or_table("09")
-```
-
-<!-- \pagebreak -->
-Table 7. _Odds ratios of being vaccinated within 12 weeks of eligibility date for each characteristic (JCVI priority group 11 aged 30-39 years)._
-```{r table6, include=FALSE}
-or_table("11")
-```
-
-#### Cumulative incidence
-
+#### Cumulative incidence  
+  
+  
 Let me know if you recommend any changes to the plots.
 In particular:
 

@@ -104,7 +104,7 @@ actions_list <- splice(
   action(
     name = "design",
     run = "r:latest analysis/00_design.R",
-    moderately_sensitive = list(
+    highly_sensitive = list(
       dates_json = "analysis/lib/dates.json",
       dates_rds = "analysis/lib/dates.rds"
     )
@@ -133,11 +133,12 @@ actions_list <- splice(
     run = glue("r:latest analysis/01_data_process.R"),
     needs = list("design", "study_definition"),
     highly_sensitive = list(
-      data = "output/data/data_processed_*.rds"
+      data = "output/data/data_processed_*.rds",
+      variables = "analysis/lib/all_variables.rds"
     ),
     moderately_sensitive = list(
-      elig_dates = "output/tables/elig_dates_tibble.rds",
-      death_counts = "output/tables/death_count_*.rds"
+      elig_dates = "output/tables/elig_dates_tibble.csv",
+      death_counts = "output/tables/death_count_*.csv"
     )
     ),
   
@@ -153,7 +154,7 @@ actions_list <- splice(
                     run = "r:latest analysis/02_summary_tables.R",
                     needs = list("process_data"),
                     moderately_sensitive = list(
-                      table = glue("output/tables/summary_table_{x}.rds")
+                      table = glue("output/tables/summary_table_{x}.csv")
                     )
                   )
   ),
@@ -172,10 +173,11 @@ actions_list <- splice(
                                     arguments = c(jcvi_group, model_type),
                                     run = "r:latest analysis/03_model.R",
                                     needs = list("process_data"),
+                                    highly_sensitive = list(
+                                      model = glue("output/models/model_{jcvi_group}_{model_type}_*.rds")
+                                    ),
                                     moderately_sensitive = list(
-                                      model = glue("output/models/model_{jcvi_group}_{model_type}_*.rds"),
-                                      # for some reason the below fails when 'table' instead of 'tab'?!
-                                      table = glue("output/tables/table_{jcvi_group}_{model_type}.rds")
+                                      table = glue("output/tables/table_{jcvi_group}_{model_type}.csv")
                                     )
                                   )
                   ), recursive = FALSE)
@@ -198,8 +200,7 @@ actions_list <- splice(
                     ),
                     moderately_sensitive = list(
                       cml_inc_plot = glue("output/figures/cml_inc_plot_{x}.png"),
-                      cml_inc_events = glue("output/figures/cml_inc_events_{x}.png"),
-                      cml_inc_censor = glue("output/figures/cml_inc_censor_{x}.png")
+                      survtable = glue("output/figures/survtable_{x}.csv")
                     )
                   )
   ),

@@ -118,4 +118,4 @@ summary_table <- bind_rows(
   rename_with(str_to_sentence) 
 
 cat("#### save summary_table ####\n")
-write_rds(summary_table, here::here("output", "tables", glue("summary_table_{jcvi_group}.rds")))
+write_csv(summary_table, here::here("output", "tables", glue("summary_table_{jcvi_group}.csv")))

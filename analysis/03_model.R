@@ -69,4 +69,4 @@ if  (model_type %in% "fadj") {
 
 cat(glue("#### postprocess model output ####\n"))
 table <- res %>% model_postprocess()
-write_rds(table, here::here("output", "tables", glue("table_{jcvi_group}_{model_type}.rds")))
+write_csv(table, here::here("output", "tables", glue("table_{jcvi_group}_{model_type}.csv")))

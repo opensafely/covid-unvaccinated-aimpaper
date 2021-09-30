@@ -12,5 +12,7 @@ venv/
 
 *.pdf
 *.docx
+*.rds
+*.csv
 
 .DS_Store

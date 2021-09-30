@@ -18,7 +18,7 @@ actions:
   design:
     run: r:latest analysis/00_design.R
     outputs:
-      moderately_sensitive:
+      highly_sensitive:
         dates_json: analysis/lib/dates.json
         dates_rds: analysis/lib/dates.rds
 
@@ -46,9 +46,10 @@ actions:
     outputs:
       highly_sensitive:
         data: output/data/data_processed_*.rds
+        variables: analysis/lib/all_variables.rds
       moderately_sensitive:
-        elig_dates: output/tables/elig_dates_tibble.rds
-        death_counts: output/tables/death_count_*.rds
+        elig_dates: output/tables/elig_dates_tibble.csv
+        death_counts: output/tables/death_count_*.csv
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Summary tables for each jcvi_group 
@@ -60,7 +61,7 @@ actions:
     - process_data
     outputs:
       moderately_sensitive:
-        table: output/tables/summary_table_02.rds
+        table: output/tables/summary_table_02.csv
 
   summary_table_09:
     run: r:latest analysis/02_summary_tables.R 09
@@ -68,7 +69,7 @@ actions:
     - process_data
     outputs:
       moderately_sensitive:
-        table: output/tables/summary_table_09.rds
+        table: output/tables/summary_table_09.csv
 
   summary_table_11:
     run: r:latest analysis/02_summary_tables.R 11
@@ -76,7 +77,7 @@ actions:
     - process_data
     outputs:
       moderately_sensitive:
-        table: output/tables/summary_table_11.rds
+        table: output/tables/summary_table_11.csv
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Models for each jcvi_group and model_type 
@@ -87,27 +88,30 @@ actions:
     needs:
     - process_data
     outputs:
-      moderately_sensitive:
+      highly_sensitive:
         model: output/models/model_02_unadj_*.rds
-        table: output/tables/table_02_unadj.rds
+      moderately_sensitive:
+        table: output/tables/table_02_unadj.csv
 
   model_09_unadj:
     run: r:latest analysis/03_model.R 09 unadj
     needs:
     - process_data
     outputs:
-      moderately_sensitive:
+      highly_sensitive:
         model: output/models/model_09_unadj_*.rds
-        table: output/tables/table_09_unadj.rds
+      moderately_sensitive:
+        table: output/tables/table_09_unadj.csv
 
   model_11_unadj:
     run: r:latest analysis/03_model.R 11 unadj
     needs:
     - process_data
     outputs:
-      moderately_sensitive:
+      highly_sensitive:
         model: output/models/model_11_unadj_*.rds
-        table: output/tables/table_11_unadj.rds
+      moderately_sensitive:
+        table: output/tables/table_11_unadj.csv
 
   ## # # # # # # # # # # # # # # # # # # # 
   ## Cumulative incidence analysis 
@@ -124,8 +128,7 @@ actions:
         model: output/models/surv_model_jcvi_group.rds
       moderately_sensitive:
         cml_inc_plot: output/figures/cml_inc_plot_jcvi_group.png
-        cml_inc_events: output/figures/cml_inc_events_jcvi_group.png
-        cml_inc_censor: output/figures/cml_inc_censor_jcvi_group.png
+        survtable: output/figures/survtable_jcvi_group.csv
 
   cml_inc_model_elig_date:
     run: r:latest analysis/04_cumulative_incidence.R elig_date
@@ -138,6 +141,5 @@ actions:
         model: output/models/surv_model_elig_date.rds
       moderately_sensitive:
         cml_inc_plot: output/figures/cml_inc_plot_elig_date.png
-        cml_inc_events: output/figures/cml_inc_events_elig_date.png
-        cml_inc_censor: output/figures/cml_inc_censor_elig_date.png
+        survtable: output/figures/survtable_elig_date.csv
 

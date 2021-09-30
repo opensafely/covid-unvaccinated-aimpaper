@@ -166,9 +166,9 @@ read_csv(here::here("output", "tables", glue("summary_table_{g}.csv"))) %>%
 Table 4. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table2, include=TRUE}
 g <- "09"
-read_rds(here::here("output", "tables", glue("summary_table_{g}.rds"))) %>%
+read_csv(here::here("output", "tables", glue("summary_table_{g}.csv"))) %>%
   full_join(
-    read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
+    read_csv(file = here::here("output", "tables", glue("table_{g}_unadj.csv"))) %>%
   rename(Characteristic = characteristic,
          "OR (95% CI)" = OR)
   ) %>%

@@ -93,4 +93,4 @@ ggsave(filename=here::here("output", "figures", glue("cml_inc_plot_{group}.png")
        width=14, height=12, units="cm")
 
 readr::write_csv(survplots$data.survtable,
-                 here::here("output", "tables", "survtable_{group}.csv"))
+                 here::here("output", "tables", glue("survtable_{group}.csv")))

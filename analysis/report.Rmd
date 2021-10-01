@@ -1,7 +1,7 @@
 ---
 title: "AIM paper analysis"
 author: "Elsie Horne"
-date: "22/09/2021"
+date: "01/10/2021"
 output:
   word_document: default
   pdf_document: default
@@ -9,20 +9,20 @@ output:
 
 ## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination  
 
-Note: there is a very slight error in _study_definition.py_
-The line^[https://github.com/opensafely/covid-unvaccinated-aimpaper/blob/96000eac92e8dca80a9792cc1b06ebb34e255fd2/analysis/study_definition.py#L52]:
+<!-- Note: there is a very slight error in _study_definition.py_ -->
+<!-- The line^[https://github.com/opensafely/covid-unvaccinated-aimpaper/blob/96000eac92e8dca80a9792cc1b06ebb34e255fd2/analysis/study_definition.py#L52]: -->
 
-`(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR cev_group OR atrisk_group)`
+<!-- `(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR cev_group OR atrisk_group)` -->
 
-should read:
+<!-- should read: -->
 
-`(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR (cev_group AND NOT preg_elig_group) OR atrisk_group)`
+<!-- `(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR (cev_group AND NOT preg_elig_group) OR atrisk_group)` -->
 
-The only errors would be women who satisfy the following criteria:
+<!-- The only errors would be women who satisfy the following criteria: -->
 
-`cev_group AND preg_elig_group AND NOT atrisk_group`
+<!-- `cev_group AND preg_elig_group AND NOT atrisk_group` -->
 
-I'm not sure it's even possible to be `cev_group AND NOT atrisk_group`, but can update and rerun if others think necessary. 
+<!-- I'm not sure it's even possible to be `cev_group AND NOT atrisk_group`, but can update and rerun if others think necessary.  -->
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE, message = FALSE, warning = FALSE)
@@ -93,13 +93,13 @@ Individuals were censored at the earliest of:
 
 #### Covariates  
 
-The following clinical covariates were defined based on definitions given in _COVID-19: the green book, chapter 14a_^[https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018444/Greenbook_chapter_14a_16Sept21.pdf]: severe asthma, chronic respiratory disease, chronic heart disease, chronic kidney disease, chronic liver disease, chronic neurological disease, diabetes (other endocrine disorders), immunosupressed, asplenia/dysfunction of spleen, severe mental illness.
+The following clinical covariates were defined based on definitions given in _COVID-19: the green book, chapter 14a_^[https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1018444/Greenbook_chapter_14a_16Sept21.pdf]: severe asthma, chronic respiratory disease, chronic heart disease, chronic kidney disease, chronic liver disease, chronic neurological disease, diabetes (other endocrine disorders), immunosuppressed, asplenia/dysfunction of spleen, severe mental illness.
 
 Covariates were defined based on information recorded up until the individual's eligibility date, with the following exceptions:
 
 - The the number of GP consultations that occurred between 1 January 2019 and 31 December 2019
 - Vaccination against influenza between 1 September 2019 and 1 April 2020
-- The following covariates relating to serious illness that may be contraindicate vaccination were defined based on information recorded between 2 weeks before the eligibility date up until 12 weeks after:
+- The following covariates relating to serious illness that may contraindicate vaccination were defined based on information recorded between 2 weeks before the eligibility date up until 12 weeks after:
     - End-of-life care
     - Unplanned hospital admission
 - The following covariates relating to COVID infection were split according to whether they occurred any time before the eligibility date or in the 12-week period after the eligibility date:
@@ -156,8 +156,46 @@ bind_rows(
 
 #### Summary tables (including logistic regression)   
   
+  
+```{r}
+# g <- "02"
+# temp_table_function <- function(g) {
+#   
+# }
+# read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
+#   mutate(across(c(Unvaccinated, Vaccinated),
+#                 ~case_when(
+#                   Characteristic %in% "Age" 
+#                   ~ .,
+#                   TRUE 
+#                   ~ str_remove_all(
+#                   str_remove(., "\\s\\(.+\\)"),
+#                   ","
+#                   )))) %>%
+#    mutate(across(c(Unvaccinated, Vaccinated),
+#                  ~case_when(
+#                    Characteristic %in% "Age"
+#                  )
+#    ))
+#   
+#   
+#   full_join(
+#     read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
+#   rename(Characteristic = characteristic,
+#          "OR (95% CI)" = OR)
+#   ) %>%
+#   mutate(
+#     across(Characteristic,
+#            ~case_when(. %in% "n (% of sample)" ~ "N",
+#                       . %in% "Age" ~ "Age: mean (SD)",
+#                       TRUE ~ .))
+#     ) %>%
+#   my_flextable_1()
 
-Table 3. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+```
+  
+
+Table 3. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being 'Vaccinated' compared to 'Unvaccinated' for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table1, include=TRUE}
 g <- "02"
 read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
@@ -174,7 +212,7 @@ read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_
   my_flextable_1()
 ```
 \pagebreak
-Table 4. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+Table 4. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being 'Vaccinated' compared to 'Unvaccinated' for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table2, include=TRUE}
 g <- "09"
 read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
@@ -191,7 +229,7 @@ read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_
   my_flextable_1()
 ```
 \pagebreak
-Table 5. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+Table 5. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being 'Vaccinated' compared to 'Unvaccinated' for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table3, include=TRUE}
 g <- "11"
 read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
@@ -237,10 +275,10 @@ tables_list[["02"]] %>%
 
 #### Cumulative incidence
   
-<!-- ![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_jcvi_group.png) -->
+![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_jcvi_group.png)
 
 
-<!-- ![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_elig_date.png) -->
+![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_elig_date.png)
 
 ```{r}
 survtable_jcvi_group <- readr::read_csv(here::here("released_outputs", "output", "tables", "survtable_jcvi_group.csv"))
@@ -251,7 +289,7 @@ survtable_elig_date <- readr::read_csv(here::here("released_outputs", "output", 
 Table 7. _Number of individuals eligible, vaccinated and censored in each 4-week period following the initial 12-week eligibility period. Stratified by JCVI group._
 ```{r, include=TRUE}
 survtable_jcvi_group %>%
-    filter(lag(n.risk>0)|time==0) %>%
+  filter(lag(n.risk>0)|time==0) %>%
   select("JCVI group" = jcvi_group,
          "Time" = time,
          "N eligible" = n.risk,
@@ -265,11 +303,10 @@ Table 8. _Number of individuals eligible, vaccinated and censored in each 4-week
 ```{r, include=TRUE}
 survtable_elig_date %>%
     filter(lag(n.risk>0)|time==0) %>%
-  select("Eligibilty date" = elig_date,
+  select("Eligibility date" = elig_date,
          "Time" = time,
          "N eligible" = n.risk,
          "N vaccinated" = n.event,
          "N censored" = n.censor) %>% 
   my_flextable_1()
 ```
-

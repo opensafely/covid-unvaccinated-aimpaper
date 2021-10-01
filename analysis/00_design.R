@@ -23,7 +23,7 @@ dates <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-09-28" # for looking at subsequent vaccinations
+    end_date = "2021-09-15" # last date of available vaccination data
   )
 
 readr::write_rds(dates, here::here("analysis", "lib", "dates.rds"))

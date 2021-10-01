@@ -49,7 +49,7 @@ study = StudyDefinition(
             OR 
             (age_1 >= 50 AND age_1 < 55 AND NOT (longres_group OR cev_group OR atrisk_group)) 
             OR 
-            (age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR cev_group OR atrisk_group)) 
+            (age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR (cev_group AND NOT preg_elig_group) OR atrisk_group)) 
             )
         """,
         registered=patients.registered_as_of(

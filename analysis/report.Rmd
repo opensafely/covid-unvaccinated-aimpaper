@@ -219,15 +219,77 @@ read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_
 <!-- ![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_elig_date.png) -->
 
 ```{r}
-# survtable_jcvi_group <- readr::read_csv(here::here("released_outputs", "output", "tables", "survtable_jcvi_group.csv"))
-# 
-# 
-# survtable_jcvi_group %>%
-#   ggplot(aes(x=time, colour=strata, y=pct.risk)) +
-#   geom_step()
-# 
-# survtable_jcvi_group %>%
-#   select(jcvi_group, time, cum.n.event) %>%
-#   pivot_wider(names_from = "jcvi_group", values_from = "cum.n.event")
+survtable_jcvi_group <- readr::read_csv(here::here("released_outputs", "output", "tables", "survtable_jcvi_group.csv"))
+survtable_elig_date <- readr::read_csv(here::here("released_outputs", "output", "tables", "survtable_elig_date.csv"))
 ```
+
+
+```{r}
+out_jcvi_group <- list()
+for (group in unique(survtable_jcvi_group$jcvi_group)) {
+  out_jcvi_group[[group]] <- survtable_jcvi_group %>%
+  filter(jcvi_group==group) %>%
+    filter(lag(n.risk>0)|time==0) %>%
+  select("JCVI Group" = jcvi_group,
+         "Time" = time,
+         "N at risk" = n.risk,
+         "N events" = n.event,
+         "N censor" = n.censor) 
+}
+```
+
+```{r, include=TRUE}
+out_jcvi_group[["02"]] %>% my_flextable_1()
+```
+```{r, include=TRUE}
+out_jcvi_group[["09"]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_jcvi_group[["11"]] %>% my_flextable_1()
+```
+
+```{r}
+groups <- unique(survtable_elig_date$elig_date)
+out_elig_date <- list()
+for (group in groups) {
+  out_elig_date[[group]] <- survtable_elig_date %>%
+  filter(elig_date==group) %>%
+    filter(lag(n.risk>0)|time==0) %>%
+  select("Eligibilty date" = elig_date,
+         "Time" = time,
+         "N at risk" = n.risk,
+         "N events" = n.event,
+         "N censor" = n.censor) 
+}
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[1]]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[2]]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[3]]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[4]]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[5]]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[6]]] %>% my_flextable_1()
+```
+
+```{r, include=TRUE}
+out_elig_date[[groups[7]]] %>% my_flextable_1()
+```
+
 

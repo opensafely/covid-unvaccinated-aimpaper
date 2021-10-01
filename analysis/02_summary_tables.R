@@ -65,7 +65,7 @@ summary_table <- bind_rows(
     mutate(value = str_c(round(mean,1), " (", round(sd,1), ")")) %>%
     select(vax_12, value) %>%
     pivot_wider(names_from = vax_12, values_from = value) %>%
-    mutate(variable = "Age"),
+    mutate(variable = "Age: mean (SD)"),
   
   # summarise all categorical variables
   lapply(
@@ -83,12 +83,13 @@ summary_table <- bind_rows(
       # use inverse probability weighting to correct for random sampling
       mutate(across(n, ~weight*n)) %>%
       select(-weight) %>%
-      mutate(value = str_c(comma(n, accuracy = 1), " (", round(100*n/sum(n),1), ")")) %>%
       ungroup() %>%
-      select(vax_12, .data[[x]], value) %>%
-      pivot_wider(names_from = vax_12, values_from = value) %>%
+      select(vax_12, .data[[x]], n) %>%
+      pivot_wider(names_from = vax_12, values_from = n) %>%
       # replace NA with 0
-      mutate(across(c(`0`, `1`), ~if_else(is.na(.), "0 (0)", .))) %>%
+      mutate(across(c(`0`, `1`), ~if_else(is.na(.), 0, .))) %>%
+      mutate(across(c(`0`, `1`),
+                    ~str_c(comma(., accuracy = 1), " (", round(100*./(`0`+`1`),1), ")"))) %>%
       mutate(variable = x,
              category = as.character(.data[[x]])) %>%
       select(variable, category, `0`, `1`)

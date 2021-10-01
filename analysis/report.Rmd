@@ -3,12 +3,11 @@ title: "AIM paper analysis"
 author: "Elsie Horne"
 date: "22/09/2021"
 output:
+  word_document: default
   pdf_document: default
 ---
 
 ## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination  
-
-\textcolor{red}{ALL RESULTS IN THIS DOCUMENT ARE BASED ON DUMMY DATA}
 
 Note: there is a very slight error in _study_definition.py_
 The line^[https://github.com/opensafely/covid-unvaccinated-aimpaper/blob/96000eac92e8dca80a9792cc1b06ebb34e255fd2/analysis/study_definition.py#L52]:
@@ -30,7 +29,7 @@ knitr::opts_chunk$set(echo = FALSE, include=FALSE, message = FALSE, warning = FA
 ```
 
 ```{r}
-dir.create(here::here("output", "report"), showWarnings = FALSE, recursive=TRUE)
+# dir.create(here::here("output", "report"), showWarnings = FALSE, recursive=TRUE)
 ```
 
 ```{r libraries}
@@ -70,7 +69,9 @@ All eligibility dates are given in Table 1.
 
 Table 1. _Eligibility dates._
 ```{r elig_dates, include=TRUE}
-read_csv(here::here("output", "tables", "elig_dates_tibble.csv")) %>%
+read_csv(here::here("released_outputs", "output", "tables", "elig_dates_tibble.csv")) %>%
+  arrange(elig_date) %>%
+  rename("JCVI group"=jcvi_group, "Age band"=ageband, "Eligibility date"=elig_date) %>%
   my_flextable_1()
 ```
 
@@ -111,25 +112,30 @@ Covariates were defined based on information recorded up until the individual's 
 
 #### Analysis plan  
 
-- From the individuals that satisfy the inclusion criteria, and for each eligibility group:
-    - Identify all unvaccinated individuals (no vaccination within 12 weeks of their eligibility date).
-    - Randomly select 10% of the vaccinated individuals.
-    - For JCVI group 11 only, randomly select 10% of the unvaccinated individuals.
-- Within each JCVI group:
-    - Generate a summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients)
-    - Fit univariate logistic regression models for vaccination within 12 weeks of eligibility date (using inverse probability weights to correct for the random sampling of vaccinated patients) 
-    - For the unvaccinated group, fit a survival model for subsequent vaccination (i.e. after the 12-week eligibility period) and plot cumulative incidence of subsequent vaccination
+From the individuals that satisfy the inclusion criteria, and for each eligibility group:
+
+- Identify all unvaccinated individuals (no vaccination within 12 weeks of their eligibility date).
+- Randomly select 10% of the vaccinated individuals.
+- For JCVI group 11 only, randomly select 10% of the unvaccinated individuals.
+
+Within each JCVI group:
+
+- Generate a summary table of the characteristics stratified by vaccinated/unvaccinated groups defined above (using inverse probability weights to correct for the random sampling of vaccinated patients).
+- Fit univariate logistic regression models for vaccination within 12 weeks of eligibility date (using inverse probability weights to correct for the random sampling of vaccinated patients). Fit univariate logistic regression models for all covariates, with the exception of:
+    - Region and continuous age
+    - Any covariate with <10 individuals in a category
+- For the unvaccinated group, fit a survival model for subsequent vaccination (i.e. after the 12-week eligibility period) and plot cumulative incidence of subsequent vaccination
 
 ### Results  
 
 #### Sample selection
 
-Table 2. _Number of patients in each JCVI group who were excluded due to death (of any cause) within the 12 week period starting on their eligibility date. (This table includes all individuals, no random sampling.)_
+Table 2. _Number of patients in each JCVI group who were excluded due to death (of any cause) within the 12 week period starting on their eligibility date. Data from JCVI group 11 were redacted due to low numbers. (This table includes all individuals meeting the other inclusion criteria, no random sampling.)_
 ```{r, include=TRUE}
 bind_rows(
-  read_csv(here::here("output", "tables", glue("death_count_02.csv"))) %>% mutate(jcvi_group="02"),
-  read_csv(here::here("output", "tables", glue("death_count_09.csv"))) %>% mutate(jcvi_group="09"),
-  read_csv(here::here("output", "tables", glue("death_count_11.csv"))) %>% mutate(jcvi_group="11")
+  read_csv(here::here("released_outputs", "output", "tables", glue("death_count_02.csv"))) %>% mutate(jcvi_group="02"),
+  read_csv(here::here("released_outputs", "output", "tables", glue("death_count_09.csv"))) %>% mutate(jcvi_group="09"),
+  # read_csv(here::here("released_outputs", "output", "tables", glue("death_count_11.csv"))) %>% mutate(jcvi_group="11")
 ) %>%
   pivot_wider(names_from = vax_12, values_from = n) %>%
   group_by(jcvi_group) %>%
@@ -151,65 +157,77 @@ bind_rows(
 #### Summary tables (including logistic regression)   
   
 
-Table 3. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+Table 3. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. All characteristics are n (% in category of characteristic) unless otherwise stated. OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table1, include=TRUE}
 g <- "02"
-read_csv(here::here("output", "tables", glue("summary_table_{g}.csv"))) %>%
+read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
   full_join(
-    read_csv(file = here::here("output", "tables", glue("table_{g}_unadj.csv"))) %>%
+    read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
   rename(Characteristic = characteristic,
          "OR (95% CI)" = OR)
   ) %>%
+  mutate(
+    across(Characteristic,
+           ~case_when(. %in% "Age" ~ "Age: mean (SD)", 
+                      . %in% "n (% of sample)" ~ "n (rowwise %)",
+                      TRUE ~ .))
+    ) %>%
   my_flextable_1()
 ```
 \pagebreak
-Table 4. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+Table 4. _Characteristics of individuals in JCVI priority group 9 aged 50-54 years. All characteristics are n (% in category of characteristic) unless otherwise stated. OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table2, include=TRUE}
 g <- "09"
-read_csv(here::here("output", "tables", glue("summary_table_{g}.csv"))) %>%
+read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
   full_join(
-    read_csv(file = here::here("output", "tables", glue("table_{g}_unadj.csv"))) %>%
+    read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
   rename(Characteristic = characteristic,
          "OR (95% CI)" = OR)
   ) %>%
+   mutate(
+    across(Characteristic,
+           ~case_when(. %in% "Age" ~ "Age: mean (SD)", 
+                      . %in% "n (% of sample)" ~ "n (rowwise %)",
+                      TRUE ~ .))
+    ) %>%
   my_flextable_1()
 ```
 \pagebreak
-Table 5. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. Age is summarised as mean (SD), all other characteristics are n (%). OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
+Table 5. _Characteristics of individuals in JCVI priority group 11 aged 30-39 years. All characteristics are n (% in category of characteristic) unless otherwise stated. OR = odds ratio of being in 'Vaccinated' group compared to 'Unvaccinated' group for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table3, include=TRUE}
 g <- "11"
-read_rds(here::here("output", "tables", glue("summary_table_{g}.rds"))) %>%
+read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
   full_join(
-    read_rds(file = here::here("output", "tables", glue("table_{g}_unadj.rds"))) %>%
+    read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
   rename(Characteristic = characteristic,
          "OR (95% CI)" = OR)
   ) %>%
+   mutate(
+    across(Characteristic,
+           ~case_when(. %in% "Age" ~ "Age: mean (SD)", 
+                      . %in% "n (% of sample)" ~ "n (rowwise %)",
+                      TRUE ~ .))
+    ) %>%
   my_flextable_1()
 ```
 
-#### Cumulative incidence  
+<!-- #### Cumulative incidence   -->
   
-  
-Let me know if you recommend any changes to the plots.
-In particular:
-
-- Censor all groups ~8 weeks after the latest eligibility date, so they all have the same duration of follow-up?
-- JCVI groups (Figures 1-3) or eligibility dates (Figures 4-6)?
+<!-- ![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_jcvi_group.png) -->
 
 
-![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_jcvi_group.png)
+<!-- ![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_elig_date.png) -->
 
+```{r}
+# survtable_jcvi_group <- readr::read_csv(here::here("released_outputs", "output", "tables", "survtable_jcvi_group.csv"))
+# 
+# 
+# survtable_jcvi_group %>%
+#   ggplot(aes(x=time, colour=strata, y=pct.risk)) +
+#   geom_step()
+# 
+# survtable_jcvi_group %>%
+#   select(jcvi_group, time, cum.n.event) %>%
+#   pivot_wider(names_from = "jcvi_group", values_from = "cum.n.event")
+```
 
-![Cumulative number of events stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_jcvi_group.png)
-
-
-![Cumulative number of censoring stratified by JCVI group. (Note that the first column should all be zeros, this is just because of the dummy data.)](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_jcvi_group.png)
-
-
-![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_plot_elig_date.png)
-
-
-![Cumulative number of events stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_events_elig_date.png)
-
-
-![Cumulative number of censoring stratified by eligibility date. (Note that the first column should all be zeros, this is just because of the dummy data.)](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/output/figures/cml_inc_censor_elig_date.png)

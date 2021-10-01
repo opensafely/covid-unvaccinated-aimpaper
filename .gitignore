@@ -11,3 +11,6 @@ venv/
 *.Rproj
 
 .DS_Store
+
+report.pdf
+report.docx

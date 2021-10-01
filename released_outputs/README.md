@@ -1,6 +1,9 @@
 # Table of contents
 
 * output
+  * output/figures
+    * [output/figures/cml_inc_plot_elig_date.png](output/figures/cml_inc_plot_elig_date.png)
+    * [output/figures/cml_inc_plot_jcvi_group.png](output/figures/cml_inc_plot_jcvi_group.png)
   * output/tables
     * [output/tables/death_count_02.csv](output/tables/death_count_02.csv)
     * [output/tables/death_count_09.csv](output/tables/death_count_09.csv)

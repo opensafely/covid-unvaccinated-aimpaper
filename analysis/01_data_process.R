@@ -390,7 +390,7 @@ data_processed <- data_extract %>%
     
     # date of vaccine or censoring
     event_date = pmin(
-      death_date, dereg_date, covid_vax_1_date_after, as.Date(dates$end_date), #as.Date("2021-09-28"),
+      death_date, dereg_date, covid_vax_1_date_after, as.Date(dates$end_date),
       na.rm=TRUE
       ),
     

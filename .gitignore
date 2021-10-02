@@ -14,3 +14,5 @@ venv/
 
 report.pdf
 report.docx
+
+.Rhistory

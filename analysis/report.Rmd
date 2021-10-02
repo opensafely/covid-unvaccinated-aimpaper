@@ -9,27 +9,8 @@ output:
 
 ## Identification and description of individuals who remain unvaccinated 12 weeks after becoming eligible for vaccination  
 
-<!-- Note: there is a very slight error in _study_definition.py_ -->
-<!-- The line^[https://github.com/opensafely/covid-unvaccinated-aimpaper/blob/96000eac92e8dca80a9792cc1b06ebb34e255fd2/analysis/study_definition.py#L52]: -->
-
-<!-- `(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR cev_group OR atrisk_group)` -->
-
-<!-- should read: -->
-
-<!-- `(age_2 >= 30 AND age_2 < 40 AND NOT (longres_group OR (cev_group AND NOT preg_elig_group) OR atrisk_group)` -->
-
-<!-- The only errors would be women who satisfy the following criteria: -->
-
-<!-- `cev_group AND preg_elig_group AND NOT atrisk_group` -->
-
-<!-- I'm not sure it's even possible to be `cev_group AND NOT atrisk_group`, but can update and rerun if others think necessary.  -->
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=FALSE, message = FALSE, warning = FALSE)
-```
-
-```{r}
-# dir.create(here::here("output", "report"), showWarnings = FALSE, recursive=TRUE)
 ```
 
 ```{r libraries}
@@ -89,7 +70,7 @@ Individuals were censored at the earliest of:
 
 - date of death
 - date of de-registration from TPP practice
-- 28 September 2021 
+- 15 September 2021 
 
 #### Covariates  
 
@@ -157,44 +138,6 @@ bind_rows(
 #### Summary tables (including logistic regression)   
   
   
-```{r}
-# g <- "02"
-# temp_table_function <- function(g) {
-#   
-# }
-# read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_{g}.csv"))) %>%
-#   mutate(across(c(Unvaccinated, Vaccinated),
-#                 ~case_when(
-#                   Characteristic %in% "Age" 
-#                   ~ .,
-#                   TRUE 
-#                   ~ str_remove_all(
-#                   str_remove(., "\\s\\(.+\\)"),
-#                   ","
-#                   )))) %>%
-#    mutate(across(c(Unvaccinated, Vaccinated),
-#                  ~case_when(
-#                    Characteristic %in% "Age"
-#                  )
-#    ))
-#   
-#   
-#   full_join(
-#     read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
-#   rename(Characteristic = characteristic,
-#          "OR (95% CI)" = OR)
-#   ) %>%
-#   mutate(
-#     across(Characteristic,
-#            ~case_when(. %in% "n (% of sample)" ~ "N",
-#                       . %in% "Age" ~ "Age: mean (SD)",
-#                       TRUE ~ .))
-#     ) %>%
-#   my_flextable_1()
-
-```
-  
-
 Table 3. _Characteristics of individuals in JCVI priority group 2 aged 80+ years. All characteristics are n (row-wise %) unless otherwise stated. OR = odds ratio of being 'Vaccinated' compared to 'Unvaccinated' for each characteristic. Inverse probability weights used to correct for the random sampling of 'Vaccinated' patients._
 ```{r table1, include=TRUE}
 g <- "02"
@@ -246,24 +189,38 @@ read_csv(here::here("released_outputs", "output", "tables", glue("summary_table_
   my_flextable_1()
 ```
 
-
-I thought is was interesting that the odds ratios for covariates relating to COVID infection varied across the JCVI groups.
-I've created Table 6 below for easy comparison.
+I've also produced Table 6, which shows odds ratios from the three JCVI groups side-by-side for easy comparison.
+In particular, I thought is was interesting that the odds ratios for covariates relating to COVID infection varied across the JCVI groups.
 Perhaps because people aged 80+ are less likely to recover from COVID and be well enough to receive a vaccine, while COVID infection in the 50-54 and 30-39 groups makes people take it more seriously and more likely to get vaccinated?
 
-Table 6. _Comparison of odds ratios for covariates relating to COVID infection across the JCVI groups_
+Table 6. _Comparison of odds ratios for all covariates across the JCVI groups_
 ```{r, include=TRUE}
 tables_list <- list()
 for (g in c("02", "09", "11")) {
   tables_list[[g]] <- read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
-    filter(str_detect(characteristic, "COVID")) %>%
     rename(!! g := OR)
 }
 
 tables_list[["02"]] %>%
-  left_join(tables_list[["09"]]) %>%
-  left_join(tables_list[["11"]]) %>%
+  mutate(order_02=row_number()) %>%
+  full_join(tables_list[["09"]]
+            , by="characteristic") %>%
+  full_join(tables_list[["11"]] %>%
+              mutate(order_11 = case_when(
+                str_detect(characteristic, "^Age group")
+                ~0,
+                str_detect(characteristic, "^Preg")
+                ~ 60.5,
+                TRUE ~ NA_real_))
+            , by="characteristic") %>%
   rename(Characteristic=characteristic) %>%
+  mutate(order = if_else(
+    is.na(order_02), 
+    order_11, 
+    as.double(order_02)
+    )) %>%
+  arrange(order) %>%
+  select(-starts_with("order")) %>%
   flextable() %>%
   add_header_row(
     values = c("", "Odds ratio of JCVI group:"),

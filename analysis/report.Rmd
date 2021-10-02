@@ -200,7 +200,6 @@ for (g in c("02", "09", "11")) {
   tables_list[[g]] <- read_csv(file = here::here("released_outputs", "output", "tables", glue("table_{g}_unadj.csv"))) %>%
     rename(!! g := OR)
 }
-
 tables_list[["02"]] %>%
   mutate(order_02=row_number()) %>%
   full_join(tables_list[["09"]]

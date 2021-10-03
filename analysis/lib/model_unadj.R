@@ -2,17 +2,24 @@
 
 model_unadj <- function(.data, v) {
   
+  if (v == "preg_elig_group") {
+    data_mod <- .data %>%
+      filter(sex %in% "F")
+  } else {
+    data_mod <- .data
+  }
+  
   cat(glue("#### apply model ####\n"))
   mod <- glm(formula = as.formula(glue("vax_12 ~ {v}")), 
              family = "binomial", 
              weights = weight,
-             data = .data)
+             data = data_mod)
   
   # don't need full model so save summary to save space
   out <- summary(mod)
   
   # levels to calculate confidence intervals for
-  parms <- str_c(v, levels(.data[,v][[1]]))[-1]
+  parms <- str_c(v, levels(data_mod[,v][[1]]))[-1]
   
   cat(glue("#### calculate confidence intervals ####\n"))
   # add confidence intervals to output

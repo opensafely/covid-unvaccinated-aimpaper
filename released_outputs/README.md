@@ -1,10 +1,29 @@
 # Table of contents
 
 * output
+  * output/figures
+    * [output/figures/cml_inc_censor_elig_date.png](output/figures/cml_inc_censor_elig_date.png)
+    * [output/figures/cml_inc_censor_jcvi_group.png](output/figures/cml_inc_censor_jcvi_group.png)
+    * [output/figures/cml_inc_events_elig_date.png](output/figures/cml_inc_events_elig_date.png)
+    * [output/figures/cml_inc_events_jcvi_group.png](output/figures/cml_inc_events_jcvi_group.png)
+    * [output/figures/cml_inc_plot_elig_date.png](output/figures/cml_inc_plot_elig_date.png)
+    * [output/figures/cml_inc_plot_jcvi_group.png](output/figures/cml_inc_plot_jcvi_group.png)
   * output/tables
     * [output/tables/death_count_02.csv](output/tables/death_count_02.csv)
     * [output/tables/death_count_09.csv](output/tables/death_count_09.csv)
     * [output/tables/elig_dates_tibble.csv](output/tables/elig_dates_tibble.csv)
+    * output/tables/release
+      * [output/tables/release/death_count_02.csv](output/tables/release/death_count_02.csv)
+      * [output/tables/release/death_count_09.csv](output/tables/release/death_count_09.csv)
+      * [output/tables/release/elig_dates_tibble.csv](output/tables/release/elig_dates_tibble.csv)
+      * [output/tables/release/summary_table_02.csv](output/tables/release/summary_table_02.csv)
+      * [output/tables/release/summary_table_09.csv](output/tables/release/summary_table_09.csv)
+      * [output/tables/release/summary_table_11.csv](output/tables/release/summary_table_11.csv)
+      * [output/tables/release/survtable_elig_date.csv](output/tables/release/survtable_elig_date.csv)
+      * [output/tables/release/survtable_jcvi_group.csv](output/tables/release/survtable_jcvi_group.csv)
+      * [output/tables/release/table_02_unadj.csv](output/tables/release/table_02_unadj.csv)
+      * [output/tables/release/table_09_unadj.csv](output/tables/release/table_09_unadj.csv)
+      * [output/tables/release/table_11_unadj.csv](output/tables/release/table_11_unadj.csv)
     * [output/tables/summary_table_02.csv](output/tables/summary_table_02.csv)
     * [output/tables/summary_table_09.csv](output/tables/summary_table_09.csv)
     * [output/tables/summary_table_11.csv](output/tables/summary_table_11.csv)

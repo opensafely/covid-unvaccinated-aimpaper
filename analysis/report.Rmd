@@ -230,11 +230,16 @@ tables_list[["02"]] %>%
 ```
 
 #### Cumulative incidence
-  
-![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_jcvi_group.png)
 
 
-![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_elig_date.png)
+```{r cmlinc, include=TRUE, results='asis'}
+cat("\n  ")
+knitr::include_graphics(here::here("released_outputs", "output", "figures", "cml_inc_plot_jcvi_group.png"))
+cat("\n  ")
+knitr::include_graphics(here::here("released_outputs", "output", "figures", "cml_inc_plot_elig_date.png"))
+```
+<!-- ![Cumulative incidence plot stratified by JCVI group.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_jcvi_group.png) -->
+<!-- ![Cumulative incidence plot stratified by eligibility date.](/Users/eh1415/Documents/covid-unvaccinated-aimpaper/released_outputs/output/figures/cml_inc_plot_elig_date.png) -->
 
 ```{r}
 survtable_jcvi_group <- readr::read_csv(here::here("released_outputs", "output", "tables", "survtable_jcvi_group.csv"))
